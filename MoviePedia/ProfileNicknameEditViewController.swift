@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class ProfileNicknameViewController: UIViewController {
+final class ProfileNicknameEditViewController: UIViewController {
     
     private enum LiteralText: String {
         case buttonTitle = "완료"
@@ -33,7 +33,7 @@ final class ProfileNicknameViewController: UIViewController {
 }
 
 //MARK: - Configuration
-private extension ProfileNicknameViewController {
+private extension ProfileNicknameEditViewController {
     func configureViews() {
         stackView.axis = .vertical
         stackView.spacing = 18
