@@ -33,6 +33,7 @@ private extension ProfileImageEditViewController {
     func configureViews() {
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
+        collectionView.delegate = self
     }
     
     func configureHierarchy() {
@@ -105,5 +106,18 @@ private extension ProfileImageEditViewController {
         snapshot.appendSections([0])
         snapshot.appendItems(profileImageNames)
         dataSource.apply(snapshot)
+    }
+}
+
+//MARK: - CollectionView Delegate
+extension ProfileImageEditViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let selectedCell = collectionView.cellForItem(at: indexPath) else {
+            print("Could not find cell")
+            return
+        }
+        selectedCell.isSelected.toggle()
+        let selectedImage = profileImageNames[indexPath.item]
+        profileImageControl.image = UIImage(named: selectedImage)
     }
 }
