@@ -35,6 +35,8 @@ final class ProfileNicknameEditViewController: UIViewController {
 //MARK: - Configuration
 private extension ProfileNicknameEditViewController {
     func configureViews() {
+        view.backgroundColor = .moviepedia_background
+        
         stackView.axis = .vertical
         stackView.spacing = 18
         stackView.distribution = .equalSpacing

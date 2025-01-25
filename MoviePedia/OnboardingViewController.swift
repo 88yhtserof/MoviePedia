@@ -23,8 +23,8 @@ final class OnboardingViewController: UIViewController {
     private let onboaringImageView = UIImageView()
     private let onboardingTitleLabel = UILabel()
     private let onboardingSubtitleLabel = UILabel()
-    private let borderLineButton = BorderLineButton(title: LiteralText.buttonTitle.text)
-    private lazy var stackView = UIStackView(arrangedSubviews: [onboardingTitleLabel, onboardingSubtitleLabel, borderLineButton])
+    private let startButton = BorderLineButton(title: LiteralText.buttonTitle.text)
+    private lazy var stackView = UIStackView(arrangedSubviews: [onboardingTitleLabel, onboardingSubtitleLabel, startButton])
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,6 +33,11 @@ final class OnboardingViewController: UIViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
+    }
+    
+    @objc func startButtonDidTapped() {
+        let profileNicknameVC = ProfileNicknameEditViewController()
+        self.navigationController?.pushViewController(profileNicknameVC, animated: true)
     }
 }
 
@@ -53,6 +58,8 @@ private extension OnboardingViewController {
         onboardingSubtitleLabel.textColor = .moviepedia_foreground
         onboardingSubtitleLabel.textAlignment = .center
         onboardingSubtitleLabel.numberOfLines = 2
+        
+        startButton.addTarget(self, action: #selector(startButtonDidTapped), for: .touchUpInside)
         
         stackView.axis = .vertical
         stackView.spacing = 15
