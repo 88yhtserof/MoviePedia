@@ -22,7 +22,9 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let nicknameTextField = StatusLableTextFieldView()
     private let borderlineButton = BorderLineButton(title: LiteralText.buttonTitle.text)
     private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, borderlineButton])
-
+    
+    private let profileImageNumber = (0...11).randomElement()!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -30,11 +32,19 @@ final class ProfileNicknameEditViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
     }
+    
+    @objc func profileImageControlDidTapped() {
+        let profileImageEditVC = ProfileImageEditViewController(profileImageNumber: profileImageNumber)
+        self.navigationController?.pushViewController(profileImageEditVC, animated: true)
+    }
 }
 
 //MARK: - Configuration
 private extension ProfileNicknameEditViewController {
     func configureViews() {
+        let image = UIImage(named: String(format: "profile_%d", profileImageNumber))
+        profileImageControl.image = image
+        profileImageControl.addTarget(self, action: #selector(profileImageControlDidTapped), for: .touchUpInside)
         
         stackView.axis = .vertical
         stackView.spacing = 18

@@ -22,7 +22,7 @@ final class ProfileImageCameraControl: ProfileImageControl {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print("Push to profile image edit view controller")
+        sendActions(for: .touchUpInside)
     }
     
     private func configureViews() {

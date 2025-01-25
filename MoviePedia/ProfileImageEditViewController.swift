@@ -16,7 +16,17 @@ final class ProfileImageEditViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
-
+    private let initialProfileImageNumber: Int
+    
+    init(profileImageNumber: Int) {
+        self.initialProfileImageNumber = profileImageNumber
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -31,6 +41,8 @@ final class ProfileImageEditViewController: BaseViewController {
 //MARK: - Configuration
 private extension ProfileImageEditViewController {
     func configureViews() {
+        profileImageControl.image = UIImage(named: String(format: "profile_%d", initialProfileImageNumber))
+        
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
         collectionView.delegate = self
@@ -86,7 +98,7 @@ private extension ProfileImageEditViewController {
     }
     
     func configureInitial() {
-        let selectedItem = IndexPath(item: 0, section: 0)
+        let selectedItem = IndexPath(item: initialProfileImageNumber, section: 0)
         collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
     }
 }
