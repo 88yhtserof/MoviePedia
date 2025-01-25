@@ -23,7 +23,12 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let borderlineButton = BorderLineButton(title: LiteralText.buttonTitle.text)
     private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, borderlineButton])
     
-    private let profileImageNumber = (0...11).randomElement()!
+    private var profileImageNumber = (0...11).randomElement()! {
+        didSet {
+            let imageName = String(format: "profile_%d", profileImageNumber)
+            profileImageControl.image = UIImage(named: imageName)
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,6 +40,9 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     @objc func profileImageControlDidTapped() {
         let profileImageEditVC = ProfileImageEditViewController(profileImageNumber: profileImageNumber)
+        profileImageEditVC.selectedImageHandler = { selectedImageNumber in
+            self.profileImageNumber = selectedImageNumber
+        }
         self.navigationController?.pushViewController(profileImageEditVC, animated: true)
     }
 }

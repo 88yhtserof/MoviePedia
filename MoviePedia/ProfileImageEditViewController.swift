@@ -16,10 +16,11 @@ final class ProfileImageEditViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
-    private let initialProfileImageNumber: Int
+    private var selectedImageNumber: Int
+    var selectedImageHandler: ((Int) -> Void)?
     
     init(profileImageNumber: Int) {
-        self.initialProfileImageNumber = profileImageNumber
+        self.selectedImageNumber = profileImageNumber
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -41,7 +42,12 @@ final class ProfileImageEditViewController: BaseViewController {
 //MARK: - Configuration
 private extension ProfileImageEditViewController {
     func configureViews() {
-        profileImageControl.image = UIImage(named: String(format: "profile_%d", initialProfileImageNumber))
+        backBarButtonItemAction = { [weak self] in
+            guard let self else { return }
+            self.selectedImageHandler?(self.selectedImageNumber)
+        }
+        
+        profileImageControl.image = UIImage(named: String(format: "profile_%d", selectedImageNumber))
         
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
@@ -98,7 +104,7 @@ private extension ProfileImageEditViewController {
     }
     
     func configureInitial() {
-        let selectedItem = IndexPath(item: initialProfileImageNumber, section: 0)
+        let selectedItem = IndexPath(item: selectedImageNumber, section: 0)
         collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
     }
 }
@@ -129,7 +135,7 @@ extension ProfileImageEditViewController: UICollectionViewDelegate {
             return
         }
         selectedCell.isSelected.toggle()
-        let selectedImage = profileImageNames[indexPath.item]
-        profileImageControl.image = UIImage(named: selectedImage)
+        selectedImageNumber = indexPath.item
+        profileImageControl.image = UIImage(named: profileImageNames[selectedImageNumber])
     }
 }

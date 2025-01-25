@@ -9,7 +9,8 @@ import UIKit
 
 class BaseViewController: UIViewController {
     
-    lazy var backBarButtonItem = UIBarButtonItem()
+    private lazy var backBarButtonItem = UIBarButtonItem()
+    var backBarButtonItemAction: (() -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,6 +20,7 @@ class BaseViewController: UIViewController {
     }
     
     @objc func backBarButtonItemDidTapped() {
+        backBarButtonItemAction?()
         navigationController?.popViewController(animated: true)
     }
 }
