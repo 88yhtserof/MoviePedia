@@ -22,6 +22,15 @@ class ProfileImageControl: UIControl {
                 return .moviepedia_subbackground
             }
         }
+        
+        var alpha: CGFloat {
+            switch self {
+            case .selected:
+                return 1
+            case .unselected:
+                return 0.5
+            }
+        }
     }
     
     private var circleBorderView = UIView()
@@ -35,13 +44,13 @@ class ProfileImageControl: UIControl {
     
     override var isSelected: Bool {
         didSet {
-            print(isSelected)
             style = isSelected ? .selected : .unselected
         }
     }
     
     private var style: Style {
         didSet {
+            circleBorderView.alpha = style.alpha
             circleBorderView.layer.borderColor = style.borderColor.cgColor
         }
     }
@@ -60,29 +69,37 @@ class ProfileImageControl: UIControl {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        let width: CGFloat = frame.width
+        circleBorderView.cornerRadius(width / 2)
+    }
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         isSelected.toggle()
     }
-    
-    private func configureViews() {
+}
+
+//MARK: - Configuration
+private extension ProfileImageControl {
+    func configureViews() {
         profileImageView.image = image
         profileImageView.contentMode = .scaleAspectFit
         
-        let width: CGFloat = 100
-        circleBorderView.cornerRadius(width / 2)
+        circleBorderView.alpha = style.alpha
         circleBorderView.border(width: 3.0, color: style.borderColor)
     }
     
-    private func configureHierarchy() {
+    func configureHierarchy() {
         addSubviews(circleBorderView)
         circleBorderView.addSubviews(profileImageView)
     }
     
-    private func configureConstraints() {
+    func configureConstraints() {
         circleBorderView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
-            make.width.height.equalTo(100)
         }
         
         profileImageView.snp.makeConstraints { make in
