@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class ProfileNicknameEditViewController: UIViewController {
+final class ProfileNicknameEditViewController: BaseViewController {
     
     private enum LiteralText: String {
         case buttonTitle = "완료"
@@ -35,7 +35,6 @@ final class ProfileNicknameEditViewController: UIViewController {
 //MARK: - Configuration
 private extension ProfileNicknameEditViewController {
     func configureViews() {
-        view.backgroundColor = .moviepedia_background
         
         stackView.axis = .vertical
         stackView.spacing = 18

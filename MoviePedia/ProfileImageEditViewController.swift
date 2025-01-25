@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class ProfileImageEditViewController: UIViewController {
+final class ProfileImageEditViewController: BaseViewController {
     
     private let profileImageControl = ProfileImageCameraControl()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: configureCollectionViewLayout())

@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class OnboardingViewController: UIViewController {
+final class OnboardingViewController: BaseViewController {
     
     private enum LiteralText: String {
         case title = "Onboarding"
@@ -28,7 +28,6 @@ final class OnboardingViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .moviepedia_background
         
         configureViews()
         configureHierarchy()
