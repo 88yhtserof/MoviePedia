@@ -47,6 +47,7 @@ private extension ProfileNicknameEditViewController {
     
     func configureConstraints() {
         profileImageControl.snp.makeConstraints { make in
+            make.width.height.equalTo(100)
             make.centerX.equalToSuperview()
             make.top.equalTo(view.safeAreaLayoutGuide).inset(15)
         }
