@@ -22,8 +22,8 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     private let profileImageControl = ProfileImageCameraControl()
     private let nicknameTextField = StatusLableTextFieldView()
-    private let borderlineButton = BorderLineButton(title: LiteralText.buttonTitle.text)
-    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, borderlineButton])
+    private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
+    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, doneButton])
     
     private var profileImageNumber = (0...11).randomElement()! {
         didSet {
@@ -57,8 +57,10 @@ final class ProfileNicknameEditViewController: BaseViewController {
         do {
             nickname = try nicknameValidator.validateNickname(of: text)
             nicknameTextField.statusText = LiteralText.statusText.text
+            doneButton.isUserInteractionEnabled = true
         } catch let error as NicknameValidator.ValidationError {
             nicknameTextField.statusText = error.description
+            doneButton.isUserInteractionEnabled = false
         } catch {
             print("Unexpected error: \(error)")
         }
@@ -74,6 +76,8 @@ private extension ProfileNicknameEditViewController {
         
         nicknameTextField.textField.placeholder = LiteralText.placeholder.text
         nicknameTextField.textField.textField.addTarget(self, action: #selector(nicknameTextFieldEditingChanged), for: .editingChanged)
+        
+        doneButton.isUserInteractionEnabled = false
         
         stackView.axis = .vertical
         stackView.spacing = 18
