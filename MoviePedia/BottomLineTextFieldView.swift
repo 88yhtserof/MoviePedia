@@ -10,7 +10,8 @@ import SnapKit
 
 final class BottomLineTextFieldView: UIView {
     
-    private let textField = UITextField()
+    // TODO: - EditingChanged 동작을 오버라이드하는 방식으로 변경해, textField를 private 처리할 수 있도록 개선하기
+    let textField = UITextField()
     private let lineView = UIView()
     
     var text: String? {
@@ -18,6 +19,14 @@ final class BottomLineTextFieldView: UIView {
             textField.text
         } set {
             textField.text = newValue
+        }
+    }
+    
+    var placeholder: String? {
+        get {
+            textField.placeholder
+        } set {
+            textField.placeholder = newValue
         }
     }
     
@@ -35,11 +44,11 @@ final class BottomLineTextFieldView: UIView {
     }
     
     private func configureViews() {
-        textField.placeholder = "닉네임을 입력하세요 예) 무피아"
         textField.textColor = .moviepedia_foreground
         textField.borderStyle = .none
         textField.tintColor = .moviepedia_foreground
         textField.font = .systemFont(ofSize: 14, weight: .regular)
+        textField.attributedPlaceholder = NSAttributedString(string: "placeholder", attributes: [.foregroundColor: UIColor.moviepedia_subbackground])
         
         lineView.backgroundColor = .moviepediaLightGray
     }

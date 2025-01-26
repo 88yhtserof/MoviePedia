@@ -12,6 +12,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     private enum LiteralText: String {
         case buttonTitle = "완료"
+        case placeholder = "예) 무피아"
         
         var text: String {
             return rawValue
@@ -53,6 +54,8 @@ private extension ProfileNicknameEditViewController {
         let image = UIImage(named: String(format: "profile_%d", profileImageNumber))
         profileImageControl.image = image
         profileImageControl.addTarget(self, action: #selector(profileImageControlDidTapped), for: .touchUpInside)
+        
+        nicknameTextField.textField.placeholder = LiteralText.placeholder.text
         
         stackView.axis = .vertical
         stackView.spacing = 18
