@@ -65,7 +65,18 @@ final class ProfileNicknameEditViewController: BaseViewController {
             print("Unexpected error: \(error)")
         }
     }
+    
+    @objc func doneButtonDidTapped() {
+        guard let nickname else { return }
+        let profileImageName = String(format: "profile_%d", profileImageNumber)
+        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
+//        UserDefaultsManager.user = user 네트워크 통신 구현 후 작업
+        print(#function, user)
+    }
 }
+
+
+
 
 //MARK: - Configuration
 private extension ProfileNicknameEditViewController {
@@ -78,6 +89,7 @@ private extension ProfileNicknameEditViewController {
         nicknameTextField.textField.textField.addTarget(self, action: #selector(nicknameTextFieldEditingChanged), for: .editingChanged)
         
         doneButton.isUserInteractionEnabled = false
+        doneButton.addTarget(self, action: #selector(doneButtonDidTapped), for: .touchUpInside)
         
         stackView.axis = .vertical
         stackView.spacing = 18
