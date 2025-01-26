@@ -13,6 +13,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private enum LiteralText: String {
         case buttonTitle = "완료"
         case placeholder = "예) 무피아"
+        case statusText = "사용할 수 있는 닉네임이에요"
         
         var text: String {
             return rawValue
@@ -31,6 +32,9 @@ final class ProfileNicknameEditViewController: BaseViewController {
         }
     }
     
+    private let nicknameValidator = NicknameValidator()
+    private var nickname: String?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -46,6 +50,19 @@ final class ProfileNicknameEditViewController: BaseViewController {
         }
         self.navigationController?.pushViewController(profileImageEditVC, animated: true)
     }
+    
+    @objc func nicknameTextFieldEditingChanged(_ sender: UITextField) {
+        guard let text = sender.text else { return }
+        
+        do {
+            nickname = try nicknameValidator.validateNickname(of: text)
+            nicknameTextField.statusText = LiteralText.statusText.text
+        } catch let error as NicknameValidator.ValidationError {
+            nicknameTextField.statusText = error.description
+        } catch {
+            print("Unexpected error: \(error)")
+        }
+    }
 }
 
 //MARK: - Configuration
@@ -56,6 +73,7 @@ private extension ProfileNicknameEditViewController {
         profileImageControl.addTarget(self, action: #selector(profileImageControlDidTapped), for: .touchUpInside)
         
         nicknameTextField.textField.placeholder = LiteralText.placeholder.text
+        nicknameTextField.textField.textField.addTarget(self, action: #selector(nicknameTextFieldEditingChanged), for: .editingChanged)
         
         stackView.axis = .vertical
         stackView.spacing = 18
