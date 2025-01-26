@@ -11,14 +11,14 @@ enum UserDefaultsManager {
     
     private enum Key: String {
         case user
+        case isOnboardingNotNeeded
         
         var defaultName: String {
-            switch self {
-            case .user: return "user"
-            }
+            return rawValue
         }
     }
     
+    // TODO: - 추상화
     static var user: User? {
         get {
             guard let data = UserDefaults.standard.data(forKey: Key.user.defaultName),
@@ -32,6 +32,15 @@ enum UserDefaultsManager {
             } catch {
                 print("ERROR:", error)
             }
+        }
+    }
+    
+    static var isOnboardingNotNeeded: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: Key.isOnboardingNotNeeded.defaultName)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Key.isOnboardingNotNeeded.defaultName)
         }
     }
 }
