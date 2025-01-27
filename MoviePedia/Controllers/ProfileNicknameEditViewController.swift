@@ -74,7 +74,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
 //        UserDefaultsManager.isOnboardingNotNeeded = true
         print(#function, user)
         
-        let mainVC = MainViewController()
+        let mainVC = MainTabBarViewController()
         switchRootViewController(rootViewController: mainVC, isNavigationEmbeded: true)
     }
 }
