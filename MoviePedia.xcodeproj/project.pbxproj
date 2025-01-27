@@ -19,7 +19,7 @@
 		148E59722D435C7F002306B9 /* Exceptions for "MoviePedia" folder in "MoviePedia" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				Resources/Info.plist,
 			);
 			target = 148E595F2D435C7E002306B9 /* MoviePedia */;
 		};
@@ -160,7 +160,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZQV4ZDQNW5;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MoviePedia/Info.plist;
+				INFOPLIST_FILE = MoviePedia/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -193,7 +193,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZQV4ZDQNW5;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MoviePedia/Info.plist;
+				INFOPLIST_FILE = MoviePedia/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
