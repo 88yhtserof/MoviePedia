@@ -12,5 +12,5 @@ struct User: Identifiable, Codable {
     let createdAt: Date
     var nickname: String
     var profileImage: String
-    var likedMovies: [Movie]
+    var likedMovies: [Movie]?
 }
