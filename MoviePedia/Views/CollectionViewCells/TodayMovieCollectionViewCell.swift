@@ -12,7 +12,7 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
     
     private let posterImageView = UIImageView()
     private let titleLabel = UILabel()
-    private let likeButton = UIButton()
+    private let likeButton = LikeSelectedButton()
     private lazy var titleStackView = UIStackView(arrangedSubviews: [titleLabel, likeButton])
     private let contentLabel = UILabel()
     
@@ -57,8 +57,6 @@ private extension TodayMovieCollectionViewCell {
         contentLabel.numberOfLines = 2
         contentLabel.textColor = .moviepedia_foreground
         contentLabel.font = .systemFont(ofSize: 14)
-        
-        likeButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
     }
     
     private func configureHierarchy() {
