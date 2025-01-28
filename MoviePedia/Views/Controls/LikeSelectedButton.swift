@@ -9,12 +9,21 @@ import UIKit
 
 class LikeSelectedButton: UIButton {
     
-    private lazy var likedConfiguration = likedButtonConfiguration()
-    private lazy var unlikedConfiguration = unlikedButtonConfiguration()
+    private lazy var likedConfiguration = buttonConfiguration(for: .liked)
+    private lazy var unlikedConfiguration = buttonConfiguration(for: .unliked)
     
     override var isSelected: Bool {
         didSet {
             configuration = isSelected ? likedConfiguration : unlikedConfiguration
+        }
+    }
+    
+    enum Status: String {
+        case liked = "heart.fill"
+        case unliked = "heart"
+        
+        var imageName: String {
+            return rawValue
         }
     }
     
@@ -32,17 +41,11 @@ class LikeSelectedButton: UIButton {
         isSelected.toggle()
     }
     
-    private func likedButtonConfiguration() -> UIButton.Configuration {
+    private func buttonConfiguration(for status: Status) -> UIButton.Configuration {
         var configuration = UIButton.Configuration.plain()
-        configuration.image = UIImage(systemName: "heart.fill")
-        configuration.image?.withTintColor(.moviepedia_point)
-        return configuration
-    }
-    
-    private func unlikedButtonConfiguration() -> UIButton.Configuration {
-        var configuration = UIButton.Configuration.plain()
-        configuration.image = UIImage(systemName: "heart")
-        configuration.image?.withTintColor(.moviepedia_point)
+        configuration.image = UIImage(systemName: status.imageName)
+        configuration.baseForegroundColor = .moviepedia_point
+        configuration.baseBackgroundColor = .clear
         return configuration
     }
 }
