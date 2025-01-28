@@ -36,7 +36,7 @@ final class RecentSearchCollectionViewCell: UICollectionViewCell {
 private extension RecentSearchCollectionViewCell {
     private func configureViews() {
         outerView.backgroundColor = .moviepedia_tagbackground
-        outerView.cornerRadius(18)
+        outerView.cornerRadius(15)
         
         titleLabel.textColor = .moviepedia_background
         titleLabel.font = .systemFont(ofSize: 14)
