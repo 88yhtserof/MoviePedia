@@ -70,9 +70,8 @@ final class ProfileNicknameEditViewController: BaseViewController {
         guard let nickname else { return }
         let profileImageName = String(format: "profile_%d", profileImageNumber)
         let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
-//        UserDefaultsManager.user = user 네트워크 통신 구현 후 작업
-//        UserDefaultsManager.isOnboardingNotNeeded = true
-        print(#function, user)
+        UserDefaultsManager.user = user
+        UserDefaultsManager.isOnboardingNotNeeded = true
         
         let mainVC = MainTabBarViewController()
         switchRootViewController(rootViewController: mainVC, isNavigationEmbeded: true)
