@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import Kingfisher
 
 final class TodayMovieCollectionViewCell: UICollectionViewCell {
     
@@ -36,7 +37,9 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
     func configure(with movie: Movie) {
         titleLabel.text = movie.title
         contentLabel.text = movie.overview
-        posterImageView.image = UIImage(systemName: "photo")
+        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + movie.poster_path) {
+            posterImageView.kf.setImage(with: imageURL)
+        }
     }
 }
 
