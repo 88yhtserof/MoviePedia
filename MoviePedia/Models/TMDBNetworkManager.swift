@@ -24,6 +24,7 @@ class TMDBNetworkManager {
             .responseDecodable(of: T.self) { response in
                 switch response.result {
                 case .success(let value):
+                    print("Success")
                     successHandler(value)
                 case .failure(let error):
                     print("ERRORL:", error)

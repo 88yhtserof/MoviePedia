@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Movie: Codable {
+struct Movie: Hashable, Codable {
     let id: Int
     let backdrop_path: String
     let title: String
