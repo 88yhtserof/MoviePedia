@@ -12,6 +12,7 @@ final class CinemaViewController: BaseViewController {
     private let profileInfoView = ProfileInfoView()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let recentSearchesRemoveAllButton = UIButton()
+    private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
@@ -36,6 +37,11 @@ final class CinemaViewController: BaseViewController {
 //MARK: - Configuration
 private extension CinemaViewController {
     func configureViews() {
+        searchBarButtonItem.tintColor = .moviepedia_point
+        searchBarButtonItem.image = UIImage(systemName: "magnifyingglass")
+        navigationItem.rightBarButtonItem = searchBarButtonItem
+        navigationItem.title = "MOVIE PEDIA"
+        
         profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.backgroundColor = .clear
