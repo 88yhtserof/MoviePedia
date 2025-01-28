@@ -10,7 +10,7 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private let profileInfoView = ProfileInfoView()
+    private lazy var profileInfoView = ProfileInfoView(user: user)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let recentSearchesRemoveAllButton = UIButton()
     private let searchBarButtonItem = UIBarButtonItem()
@@ -18,8 +18,9 @@ final class CinemaViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
+    private var user = UserDefaultsManager.user!
     private var recentSearches: [String] = ["스파이더맨1", "어매이징 스파이더맨", "어매이징 스파이더맨2", "스파이더맨2"]
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         

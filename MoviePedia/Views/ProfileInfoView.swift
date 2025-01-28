@@ -17,7 +17,10 @@ class ProfileInfoView: UIView {
     private lazy var profileStackView = UIStackView(arrangedSubviews: [profileImageControl, userInfoButton])
     private let movieBoxButton = UIButton()
     
-    init() {
+    private let user: User
+    
+    init(user: User) {
+        self.user = user
         super.init(frame: .zero)
         
         configureViews()
@@ -30,16 +33,20 @@ class ProfileInfoView: UIView {
     }
 }
 
+//MARK: - Configuration
 private extension ProfileInfoView {
     func configureViews() {
         backgroundView.cornerRadius()
         backgroundView.backgroundColor = .moviepedia_subbackground
         
+        profileImageControl.image = UIImage(named: user.profileImage)
+        
         var config = UIButton.Configuration.plain()
         let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
         let attributedSubtitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 12, weight: .light), .foregroundColor: UIColor.moviepedia_tagbackground])
-        config.attributedTitle = AttributedString("닉네임", attributes: attributedTitleContainer)
-        config.attributedSubtitle = AttributedString("25.01.14 가입", attributes: attributedSubtitleContainer)
+        let dateStr = String(format: "%@ 가입", DateFormatterManager.shared.string(from: user.createdAt, format: .userCreatedAt))
+        config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
+        config.attributedSubtitle = AttributedString(dateStr, attributes: attributedSubtitleContainer)
         userInfoButton.configuration = config
         
         let image = UIImage(systemName: "chevron.right")
@@ -51,7 +58,7 @@ private extension ProfileInfoView {
         profileStackView.alignment = .center
         
         var movieBoxConfig = UIButton.Configuration.filled()
-        movieBoxConfig.title = "0개인 무비박스 보관 중"
+        movieBoxConfig.title = String(format: "%d개인 무비박스 보관 중", user.likedMovies.count)
         movieBoxConfig.baseForegroundColor = .moviepedia_foreground
         movieBoxConfig.baseBackgroundColor = .moviepedia_point
         movieBoxConfig.background.cornerRadius = 10
