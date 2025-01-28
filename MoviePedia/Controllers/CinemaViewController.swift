@@ -19,7 +19,7 @@ final class CinemaViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private var user = UserDefaultsManager.user!
-    private var recentSearches: [String] = ["스파이더맨1", "어매이징 스파이더맨", "어매이징 스파이더맨2", "스파이더맨2"]
+    private var recentSearches: [String] = UserDefaultsManager.recentSearches
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,6 +33,11 @@ final class CinemaViewController: BaseViewController {
     @objc func presentProfileEditVC() {
         let profileNicknameEditVC = ProfileNicknameEditViewController()
         present(profileNicknameEditVC, animated: true)
+    }
+    
+    @objc func removeAllRecentSearches() {
+        UserDefaultsManager.recentSearches = []
+        recentSearches = []
     }
 }
 
@@ -51,6 +56,7 @@ private extension CinemaViewController {
         
         recentSearchesRemoveAllButton.setTitle("전체 삭제", for: .normal)
         recentSearchesRemoveAllButton.setTitleColor(.moviepedia_point, for: .normal)
+        recentSearchesRemoveAllButton.addTarget(self, action: #selector(removeAllRecentSearches), for: .touchUpInside)
     }
     
     func configureHierarchy() {
