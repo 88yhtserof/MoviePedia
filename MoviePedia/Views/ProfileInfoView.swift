@@ -65,29 +65,32 @@ private extension ProfileInfoView {
     }
     
     func configureConstraints() {
-        let inset: CGFloat = 16
+        let horizontalInnset: CGFloat = 14
+        let verticalInset: CGFloat = 8
         
         backgroundView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
         
         profileImageControl.snp.makeConstraints { make in
-            make.width.height.equalTo(70)
+            make.width.height.equalTo(60)
         }
         
         profileStackView.snp.makeConstraints { make in
-            make.top.leading.equalToSuperview().inset(inset)
+            make.top.equalToSuperview().inset(verticalInset)
+            make.leading.equalToSuperview().inset(horizontalInnset)
         }
         
         chevronButton.snp.makeConstraints { make in
             make.centerY.equalTo(profileStackView)
-            make.trailing.equalToSuperview().inset(inset)
+            make.trailing.equalToSuperview().inset(horizontalInnset)
         }
         
         movieBoxButton.snp.makeConstraints { make in
-            make.height.equalTo(45)
-            make.top.equalTo(profileStackView.snp.bottom).offset(inset)
-            make.bottom.horizontalEdges.equalToSuperview().inset(inset)
+            make.height.equalTo(40)
+            make.top.equalTo(profileStackView.snp.bottom).offset(verticalInset)
+            make.horizontalEdges.equalToSuperview().inset(horizontalInnset)
+            make.bottom.equalToSuperview().inset(verticalInset)
         }
     }
 }
