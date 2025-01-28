@@ -15,15 +15,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         var rootViewController: UIViewController
-        
-        if UserDefaultsManager.isOnboardingNotNeeded {
-            rootViewController = MainViewController()
-        } else {
-            rootViewController = OnboardingViewController()
-        }
+        rootViewController = MainTabBarViewController()
+//        if UserDefaultsManager.isOnboardingNotNeeded {
+//            rootViewController = MainTabBarViewController()
+//        } else {
+//            rootViewController = UINavigationController(rootViewController: OnboardingViewController())
+//        }
         
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = UINavigationController(rootViewController: rootViewController)
+        window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
         
     }
