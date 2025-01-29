@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import Kingfisher
 
 final class MovieListCollectionViewCell: UICollectionViewCell {
     
@@ -42,11 +43,14 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
         titleLabel.text = todayMovie.movie.title
         dateLabel.text = DateFormatterManager.shared.string(from: todayMovie.movie.release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
         if todayMovie.movie.genre_ids.count >= 2 {
-            firGenreLabel.text = String("액션")
-            secGenreLabel.text = String("애니메이션")
+            firGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[0])?.name_kr
+            secGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[1])?.name_kr
         }
         
-        posterImageView.image = UIImage(systemName: "photo")
+        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + todayMovie.movie.poster_path) {
+            posterImageView.kf.setImage(with: imageURL)
+        }
+        
         likeButton.isSelected = todayMovie.isLiked
         likeButton.tag = todayMovie.index
     }

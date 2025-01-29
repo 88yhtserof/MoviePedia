@@ -15,6 +15,7 @@ class RoundLabel: UIView {
     var text: String? {
         didSet {
             label.text = text
+            isHidden = false
         }
     }
     
@@ -39,6 +40,7 @@ class RoundLabel: UIView {
         label.snp.makeConstraints { make in
             make.edges.equalToSuperview().inset(4)
         }
+        isHidden = true
     }
     
     required init?(coder: NSCoder) {
