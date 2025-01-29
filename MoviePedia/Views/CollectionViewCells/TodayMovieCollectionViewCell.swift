@@ -13,7 +13,7 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
     
     private let posterImageView = UIImageView()
     private let titleLabel = UILabel()
-    private let likeButton = LikeSelectedButton()
+    let likeButton = LikeSelectedButton()
     private lazy var titleStackView = UIStackView(arrangedSubviews: [titleLabel, likeButton])
     private let contentLabel = UILabel()
     
@@ -32,12 +32,16 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         posterImageView.image = UIImage(systemName: "photo")
+        likeButton.tag = 0
     }
     
-    func configure(with movie: Movie) {
-        titleLabel.text = movie.title
-        contentLabel.text = movie.overview
-        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + movie.poster_path) {
+    func configure(with todayMovie: TodayMovie) {
+        titleLabel.text = todayMovie.movie.title
+        contentLabel.text = todayMovie.movie.overview
+        likeButton.isSelected = todayMovie.isLiked
+        likeButton.tag = todayMovie.index
+        
+        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + todayMovie.movie.poster_path) {
             posterImageView.kf.setImage(with: imageURL)
         }
     }

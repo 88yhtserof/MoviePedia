@@ -42,6 +42,16 @@ final class CinemaViewController: BaseViewController {
         recentSearches = []
     }
     
+    @objc func likeButtonTapped(_ sender: UIButton) {
+        let movie = todayMovies[sender.tag]
+        if sender.isSelected {
+            user.likedMovies.insert(movie)
+        } else {
+            user.likedMovies.remove(movie)
+        }
+        UserDefaultsManager.user = user
+    }
+    
     private func loadTodayMovies() {
         let trendingRequest = TrendingRequest()
         TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: TrendingResponse) in
@@ -233,7 +243,10 @@ extension CinemaViewController {
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        cell.configure(with: item)
+        let isLiked = user.likedMovies.isSuperset(of: [item])
+        let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
+        cell.configure(with: todayMovie)
+        cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     }
     
     func headerSupplementaryRegistrationHandler(supplementaryView: TitleSupplementaryView, string: String, indexPath: IndexPath) {
@@ -258,7 +271,6 @@ extension CinemaViewController {
             snapshot.appendItems(items, toSection: .recentSeach)
         }
         let items = todayMovies.map{ Item(todayMovie: $0) }
-        print(#function, items)
         snapshot.appendItems(items, toSection: .todayMovie)
         
         dataSource.apply(snapshot)
