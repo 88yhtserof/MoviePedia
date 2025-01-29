@@ -55,7 +55,7 @@ final class CinemaViewController: BaseViewController {
     
     private func loadTodayMovies() {
         let trendingRequest = TrendingRequest()
-        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: TrendingResponse) in
+        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
             self.todayMovies = trending.results
             self.updateSnapshot(for: .todayMovie)
         } failureHandler: { error in
