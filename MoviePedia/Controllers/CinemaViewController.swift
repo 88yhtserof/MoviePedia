@@ -50,6 +50,7 @@ final class CinemaViewController: BaseViewController {
             user.likedMovies.remove(movie)
         }
         UserDefaultsManager.user = user
+        NotificationCenter.default.post(name: NSNotification.Name("likedMovie"), object: nil, userInfo: ["likedMoviesCount": user.likedMovies.count])
     }
     
     private func loadTodayMovies() {
