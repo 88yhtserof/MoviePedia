@@ -12,5 +12,5 @@ struct User: Identifiable, Codable {
     let createdAt: Date
     var nickname: String
     var profileImage: String
-//    var likedMovies: [String] 네트워크 통신 구현 후 작업
+    var likedMovies: Set<Movie> = []
 }

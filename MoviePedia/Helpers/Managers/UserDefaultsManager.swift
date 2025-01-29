@@ -12,6 +12,7 @@ enum UserDefaultsManager {
     private enum Key: String {
         case user
         case isOnboardingNotNeeded
+        case recentSearches
         
         var defaultName: String {
             return rawValue
@@ -41,6 +42,15 @@ enum UserDefaultsManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Key.isOnboardingNotNeeded.defaultName)
+        }
+    }
+    
+    static var recentSearches: [String] {
+        get {
+            return UserDefaults.standard.stringArray(forKey: Key.recentSearches.defaultName) ?? []
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Key.recentSearches.defaultName)
         }
     }
 }

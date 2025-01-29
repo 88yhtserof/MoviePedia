@@ -90,6 +90,7 @@ private extension ProfileImageControl {
         
         circleBorderView.alpha = style.alpha
         circleBorderView.border(width: 3.0, color: style.borderColor)
+        circleBorderView.backgroundColor = .moviepedia_background
     }
     
     func configureHierarchy() {

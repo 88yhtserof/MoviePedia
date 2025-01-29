@@ -17,13 +17,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         var rootViewController: UIViewController
         
         if UserDefaultsManager.isOnboardingNotNeeded {
-            rootViewController = MainViewController()
+            rootViewController = MainTabBarViewController()
         } else {
-            rootViewController = OnboardingViewController()
+            rootViewController = UINavigationController(rootViewController: OnboardingViewController())
         }
         
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = UINavigationController(rootViewController: rootViewController)
+        window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
         
     }
