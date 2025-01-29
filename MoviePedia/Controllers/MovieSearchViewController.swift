@@ -16,8 +16,10 @@ final class MovieSearchViewController: UIViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var movies: [Movie] = [Movie(id: 0, backdrop_path: "", title: "어메이징 스파이더맨 1", overview: "", poster_path: "", genre_ids: [0, 1], release_date: "2018-04-12", vote_average: 3.0)]
+    private let networkManager = TMDBNetworkManager.shared
+    private var movies: [Movie] = []
     private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
+    private var page: Int = 1
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,11 +29,26 @@ final class MovieSearchViewController: UIViewController {
         configureConstraints()
         configureCollectionViewDataSource()
     }
+    
+    private func loadSearchResults(query: String, isInitial: Bool = true) {
+        if isInitial { movies = [] }
+        
+        let request = SearchRequest(query: query, page: page)
+        networkManager.request(api: .search(request)) { (value: MovieResponse) in
+            self.movies.append(contentsOf: value.results)
+            self.createSnapshot()
+        } failureHandler: { error in
+            print(error)
+        }
+
+    }
 }
 
 //MARK: - Configuration
 private extension MovieSearchViewController {
     func configureViews() {
+        searchBar.delegate = self
+        
         collectionView.alwaysBounceVertical = false
         collectionView.backgroundColor = .moviepedia_background
     }
@@ -73,6 +90,7 @@ private extension MovieSearchViewController {
     }
 }
 
+//MARK: - CollectionView DataSource
 private extension MovieSearchViewController {
     enum Section: Int, CaseIterable {
         case empty
@@ -123,6 +141,11 @@ private extension MovieSearchViewController {
         }
         dataSource.apply(snapshot)
     }
+    
+    // TODO: - pagination 적용 시 데이터를 append하는 방식으로 개선
+    func updateSnapshot() {
+        
+    }
 }
 
 //MARK: - CollectionView Layout
@@ -161,5 +184,14 @@ private extension MovieSearchViewController {
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
         let section = NSCollectionLayoutSection(group: group)
         return section
+    }
+}
+
+//MARK: - SearchBar Delegate
+extension MovieSearchViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        view.endEditing(true)
+        guard let query = searchBar.text else { return }
+        loadSearchResults(query: query)
     }
 }
