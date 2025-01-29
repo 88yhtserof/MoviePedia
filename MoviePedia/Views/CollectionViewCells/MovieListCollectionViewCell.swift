@@ -35,6 +35,7 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        // TODO: - 이미지가 없을 경우 대체 이미지 개선
         posterImageView.image = UIImage(systemName: "photo")
         likeButton.tag = 0
     }
@@ -47,7 +48,8 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
             secGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[1])?.name_kr
         }
         
-        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + todayMovie.movie.poster_path) {
+        if let path = todayMovie.movie.poster_path,
+           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             posterImageView.kf.setImage(with: imageURL)
         }
         
