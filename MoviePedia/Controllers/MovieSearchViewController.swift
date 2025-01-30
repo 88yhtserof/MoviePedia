@@ -14,6 +14,7 @@ final class MovieSearchViewController: BaseViewController {
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!
+    private var snapshot: Snapshot!
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
@@ -52,7 +53,11 @@ final class MovieSearchViewController: BaseViewController {
             self.currentPage += 1
             self.totalPage = value.total_pages
             self.movies.append(contentsOf: value.results)
-            self.createSnapshot()
+            if isInitial {
+                self.createSnapshot()
+            } else {
+                self.updateSnapshot(newItems:value.results, after: self.movies.count)
+            }
         } failureHandler: { error in
             print(error)
         }
@@ -173,7 +178,7 @@ private extension MovieSearchViewController {
     }
     
     func createSnapshot() {
-        var snapshot = Snapshot()
+        snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
         if movies.isEmpty {
@@ -183,6 +188,13 @@ private extension MovieSearchViewController {
             let items = movies.map{ Item(movie: $0) }
             snapshot.appendItems(items, toSection: .searchResults)
         }
+        dataSource.apply(snapshot)
+    }
+    
+    func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
+        let items = newMovies.map{ Item(movie: $0) }
+        guard let afterItem = snapshot.itemIdentifiers(inSection: .searchResults).last else { return }
+        snapshot.insertItems(items, afterItem: afterItem)
         dataSource.apply(snapshot)
     }
 }
