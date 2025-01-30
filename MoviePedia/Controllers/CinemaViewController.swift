@@ -19,7 +19,12 @@ final class CinemaViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private var user = UserDefaultsManager.user!
-    private var recentSearches: [String] = UserDefaultsManager.recentSearches
+    private var recentSearches: [String] = UserDefaultsManager.recentSearches {
+        didSet {
+            print("Update recentSearches")
+            updateSnapshot(for: .recentSeach)
+        }
+    }
     private var todayMovies: [Movie] = []
     
     override func viewDidLoad() {
@@ -28,6 +33,7 @@ final class CinemaViewController: BaseViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
+        configureNotificationObserver()
         configureCollectionViewDataSource()
         loadTodayMovies()
     }
@@ -56,6 +62,11 @@ final class CinemaViewController: BaseViewController {
     @objc func pushToMovieSearchVC() {
         let movieSearchVC = MovieSearchViewController()
         navigationController?.pushViewController(movieSearchVC, animated: true)
+    }
+    
+    @objc func updateRecentResults(_ notification: Notification) {
+        guard let recentSearch = notification.userInfo?["recentSearch"] as? String else { return }
+        recentSearches.append(recentSearch)
     }
     
     private func loadTodayMovies() {
@@ -105,6 +116,10 @@ private extension CinemaViewController {
             make.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
             make.bottom.equalTo(view.safeAreaLayoutGuide).inset(8)
         }
+    }
+    
+    func configureNotificationObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(updateRecentResults), name: NSNotification.Name("recentSearch"), object: nil)
     }
     
     func configureCollectionViewDataSource() {

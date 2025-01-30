@@ -48,6 +48,10 @@ final class MovieSearchViewController: BaseViewController {
         recentSearches.append(recentSearch)
         UserDefaultsManager.recentSearches = recentSearches
     }
+    
+    private func postRecentSearchNotification(_ resentSearch: String) {
+        NotificationCenter.default.post(name: NSNotification.Name("recentSearch"), object: nil, userInfo: ["recentSearch": resentSearch])
+    }
 }
 
 //MARK: - Configuration
@@ -200,5 +204,6 @@ extension MovieSearchViewController: UISearchBarDelegate {
         guard let query = searchBar.text else { return }
         loadSearchResults(query: query)
         updateRecentResults(query)
+        postRecentSearchNotification(query)
     }
 }
