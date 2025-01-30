@@ -18,7 +18,7 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     private let firGenreLabel = RoundLabel()
     private let secGenreLabel = RoundLabel()
     private lazy var genreStackView = UIStackView(arrangedSubviews: [firGenreLabel, secGenreLabel])
-    private let likeButton = LikeSelectedButton()
+    let likeButton = LikeSelectedButton()
     private let separatorView = UIView()
     
     override init(frame: CGRect) {

@@ -50,7 +50,17 @@ final class MovieSearchViewController: BaseViewController {
     }
     
     private func postRecentSearchNotification(_ resentSearch: String) {
-        NotificationCenter.default.post(name: NSNotification.Name("recentSearch"), object: nil, userInfo: ["recentSearch": resentSearch])
+        NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil, userInfo: ["recentSearch": resentSearch])
+    }
+    
+    @objc func likedButtonTapped(_ sender: UIButton) {
+        let movie = movies[sender.tag]
+        if sender.isSelected {
+            UserDefaultsManager.user!.likedMovies.insert(movie)
+        } else {
+            UserDefaultsManager.user!.likedMovies.remove(movie)
+        }
+        NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
     }
 }
 
@@ -136,6 +146,7 @@ private extension MovieSearchViewController {
         let isLiked = likedMovies.isSuperset(of: [item])
         let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
         cell.configure(with: todayMovie)
+        cell.likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
     }
     
     func createSnapshot() {

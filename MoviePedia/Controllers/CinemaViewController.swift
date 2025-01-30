@@ -18,7 +18,8 @@ final class CinemaViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var user = UserDefaultsManager.user!
+    private var user: User { UserDefaultsManager.user! }
+    private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
     private var recentSearches: [String] = UserDefaultsManager.recentSearches {
         didSet {
             if recentSearches.isEmpty {
@@ -29,6 +30,7 @@ final class CinemaViewController: BaseViewController {
         }
     }
     private var todayMovies: [Movie] = []
+    private var isUpdatingTodayMovieNeeded: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,6 +41,15 @@ final class CinemaViewController: BaseViewController {
         configureNotificationObserver()
         configureCollectionViewDataSource()
         loadTodayMovies()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if isUpdatingTodayMovieNeeded {
+            updateSnapshot(for: .todayMovie)
+            isUpdatingTodayMovieNeeded = false
+        }
     }
     
     @objc func presentProfileEditVC() {
@@ -54,12 +65,11 @@ final class CinemaViewController: BaseViewController {
     @objc func likeButtonTapped(_ sender: UIButton) {
         let movie = todayMovies[sender.tag]
         if sender.isSelected {
-            user.likedMovies.insert(movie)
+            UserDefaultsManager.user!.likedMovies.insert(movie)
         } else {
-            user.likedMovies.remove(movie)
+            UserDefaultsManager.user!.likedMovies.remove(movie)
         }
-        UserDefaultsManager.user = user
-        NotificationCenter.default.post(name: NSNotification.Name("likedMovie"), object: nil, userInfo: ["likedMoviesCount": user.likedMovies.count])
+        profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
     
     @objc func pushToMovieSearchVC() {
@@ -70,6 +80,11 @@ final class CinemaViewController: BaseViewController {
     @objc func updateRecentResults(_ notification: Notification) {
         guard let recentSearch = notification.userInfo?["recentSearch"] as? String else { return }
         recentSearches.append(recentSearch)
+    }
+    
+    @objc func updateLikedMovie(_ notification: Notification) {
+        profileInfoView.updateLikedMoviesCount(likedMovies.count)
+        isUpdatingTodayMovieNeeded = true
     }
     
     private func loadTodayMovies() {
@@ -122,7 +137,8 @@ private extension CinemaViewController {
     }
     
     func configureNotificationObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateRecentResults), name: NSNotification.Name("recentSearch"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateRecentResults), name: NSNotification.Name("RecentSearch"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateLikedMovie), name: NSNotification.Name("LikedMovie"), object: nil)
     }
     
     func configureCollectionViewDataSource() {
@@ -312,6 +328,8 @@ extension CinemaViewController {
             snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .emptyRecentSearch))
             items = recentSearches.map{ Item(recentSearch: $0) }
         case .todayMovie:
+            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .todayMovie))
+            dataSource.apply(snapshot)
             items = todayMovies.map{ Item(todayMovie: $0) }
         }
         snapshot.appendItems(items, toSection: section)
