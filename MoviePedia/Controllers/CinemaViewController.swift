@@ -16,7 +16,6 @@ final class CinemaViewController: BaseViewController {
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
-    private var snapshot: Snapshot!
     
     private var user: User { UserDefaultsManager.user! }
     private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
@@ -276,7 +275,7 @@ extension CinemaViewController {
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        let isLiked = user.likedMovies.isSuperset(of: [item])
+        let isLiked = user.likedMovies.contains(where: { $0.id == item.id })
         let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
         cell.configure(with: todayMovie)
         cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
@@ -293,7 +292,8 @@ extension CinemaViewController {
     }
     
     func createSnapshot() {
-        snapshot = Snapshot()
+        print(#function)
+        var snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
         if recentSearches.isEmpty {
@@ -311,21 +311,5 @@ extension CinemaViewController {
     
     // TODO: - 데이터 갱신 로직 개선 후 적용
     func updateSnapshot(for section: Section) {
-        var items: [Item]
-        switch section {
-        case .emptyRecentSearch:
-            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .recentSeach))
-            items = [Item(empty: "최근 검색 내역이 없습니다.")]
-        case .recentSeach:
-            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .emptyRecentSearch))
-            items = recentSearches.map{ Item(recentSearch: $0) }
-        case .todayMovie:
-            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .todayMovie))
-            dataSource.apply(snapshot)
-            items = todayMovies.map{ Item(todayMovie: $0) }
-        }
-        snapshot.appendItems(items, toSection: section)
-        dataSource.apply(snapshot)
-        
     }
 }

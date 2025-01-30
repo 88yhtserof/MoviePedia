@@ -45,14 +45,15 @@ final class MovieSearchViewController: BaseViewController {
     
     private func updateRecentResults(_ recentSearch: RecentSearch) {
         var recentSearches = UserDefaultsManager.recentSearches
-        if recentSearches.contains(recentSearch) {
-            recentSearches.remove(recentSearch)
+        if let index = recentSearches.firstIndex(where: { $0.search == recentSearch.search }) {
+            recentSearches.remove(at: index)
         }
         recentSearches.insert(recentSearch)
         UserDefaultsManager.recentSearches = recentSearches
+        postRecentSearchNotification()
     }
     
-    private func postRecentSearchNotification(_ recentSearch: RecentSearch) {
+    private func postRecentSearchNotification() {
         NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil)
     }
     
@@ -219,6 +220,5 @@ extension MovieSearchViewController: UISearchBarDelegate {
         loadSearchResults(query: query)
         let recentSearch = RecentSearch(search: query, date: Date())
         updateRecentResults(recentSearch)
-        postRecentSearchNotification(recentSearch)
     }
 }
