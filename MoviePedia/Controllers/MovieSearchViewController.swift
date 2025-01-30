@@ -85,6 +85,8 @@ final class MovieSearchViewController: BaseViewController {
 //MARK: - Configuration
 private extension MovieSearchViewController {
     func configureViews() {
+        navigationItem.title = "영화 검색"
+        
         searchBar.delegate = self
         
         collectionView.alwaysBounceVertical = false
