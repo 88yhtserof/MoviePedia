@@ -22,12 +22,7 @@ final class CinemaViewController: BaseViewController {
     private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
     private var recentSearches: [String] = UserDefaultsManager.recentSearches {
         didSet {
-            if recentSearches.isEmpty {
-                updateSnapshot(for: .emptyRecentSearch)
-            } else {
-                updateSnapshot(for: .recentSeach)
-            }
-        }
+            createSnapshot()        }
     }
     private var todayMovies: [Movie] = []
     private var isUpdatingTodayMovieNeeded: Bool = false
@@ -47,7 +42,7 @@ final class CinemaViewController: BaseViewController {
         super.viewWillAppear(animated)
         
         if isUpdatingTodayMovieNeeded {
-            updateSnapshot(for: .todayMovie)
+            createSnapshot()
             isUpdatingTodayMovieNeeded = false
         }
     }
@@ -91,7 +86,7 @@ final class CinemaViewController: BaseViewController {
         let trendingRequest = TrendingRequest()
         TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
             self.todayMovies = trending.results
-            self.updateSnapshot(for: .todayMovie)
+            self.createSnapshot()
         } failureHandler: { error in
             print("Need to handle error")
         }
@@ -318,6 +313,7 @@ extension CinemaViewController {
         dataSource.apply(snapshot)
     }
     
+    // TODO: - 데이터 갱신 로직 개선 후 적용
     func updateSnapshot(for section: Section) {
         var items: [Item]
         switch section {
