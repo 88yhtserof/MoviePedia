@@ -42,6 +42,12 @@ final class MovieSearchViewController: UIViewController {
         }
 
     }
+    
+    private func updateRecentResults(_ recentSearch: String) {
+        var recentSearches = UserDefaultsManager.recentSearches
+        recentSearches.append(recentSearch)
+        UserDefaultsManager.recentSearches = recentSearches
+    }
 }
 
 //MARK: - Configuration
@@ -193,5 +199,6 @@ extension MovieSearchViewController: UISearchBarDelegate {
         view.endEditing(true)
         guard let query = searchBar.text else { return }
         loadSearchResults(query: query)
+        updateRecentResults(query)
     }
 }
