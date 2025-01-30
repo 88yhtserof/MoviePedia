@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class MovieSearchViewController: UIViewController {
+final class MovieSearchViewController: BaseViewController {
     
     private let searchBar = DarkSearchBar()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())

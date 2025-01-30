@@ -53,6 +53,11 @@ final class CinemaViewController: BaseViewController {
         NotificationCenter.default.post(name: NSNotification.Name("likedMovie"), object: nil, userInfo: ["likedMoviesCount": user.likedMovies.count])
     }
     
+    @objc func pushToMovieSearchVC() {
+        let movieSearchVC = MovieSearchViewController()
+        navigationController?.pushViewController(movieSearchVC, animated: true)
+    }
+    
     private func loadTodayMovies() {
         let trendingRequest = TrendingRequest()
         TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
@@ -70,6 +75,8 @@ private extension CinemaViewController {
     func configureViews() {
         searchBarButtonItem.tintColor = .moviepedia_point
         searchBarButtonItem.image = UIImage(systemName: "magnifyingglass")
+        searchBarButtonItem.target = self
+        searchBarButtonItem.action = #selector(pushToMovieSearchVC)
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
