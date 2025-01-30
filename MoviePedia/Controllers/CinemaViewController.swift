@@ -21,8 +21,11 @@ final class CinemaViewController: BaseViewController {
     private var user = UserDefaultsManager.user!
     private var recentSearches: [String] = UserDefaultsManager.recentSearches {
         didSet {
-            print("Update recentSearches")
-            updateSnapshot(for: .recentSeach)
+            if recentSearches.isEmpty {
+                updateSnapshot(for: .emptyRecentSearch)
+            } else {
+                updateSnapshot(for: .recentSeach)
+            }
         }
     }
     private var todayMovies: [Movie] = []
@@ -303,14 +306,15 @@ extension CinemaViewController {
         var items: [Item]
         switch section {
         case .emptyRecentSearch:
+            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .recentSeach))
             items = [Item(empty: "최근 검색 내역이 없습니다.")]
         case .recentSeach:
+            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .emptyRecentSearch))
             items = recentSearches.map{ Item(recentSearch: $0) }
         case .todayMovie:
             items = todayMovies.map{ Item(todayMovie: $0) }
         }
         snapshot.appendItems(items, toSection: section)
-        snapshot.reloadSections([section])
         dataSource.apply(snapshot)
         
     }
