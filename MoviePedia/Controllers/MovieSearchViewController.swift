@@ -14,12 +14,12 @@ final class MovieSearchViewController: BaseViewController {
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!
-    private var snapshot: Snapshot!
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
     private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
-    private var page: Int = 1
+    private var currentPage: Int = 1
+    private var totalPage: Int?
     
     init(searchWord: String? = nil) {
         super.init(nibName: nil, bundle: nil)
@@ -47,8 +47,10 @@ final class MovieSearchViewController: BaseViewController {
     private func loadSearchResults(query: String, isInitial: Bool = true) {
         if isInitial { movies = [] }
         
-        let request = SearchRequest(query: query, page: page)
+        let request = SearchRequest(query: query, page: currentPage)
         networkManager.request(api: .search(request)) { (value: MovieResponse) in
+            self.currentPage += 1
+            self.totalPage = value.total_pages
             self.movies.append(contentsOf: value.results)
             self.createSnapshot()
         } failureHandler: { error in
@@ -91,6 +93,7 @@ private extension MovieSearchViewController {
         
         collectionView.alwaysBounceVertical = false
         collectionView.backgroundColor = .moviepedia_background
+        collectionView.delegate = self
     }
     
     func configureHierarchy() {
@@ -170,7 +173,7 @@ private extension MovieSearchViewController {
     }
     
     func createSnapshot() {
-        snapshot = Snapshot()
+        var snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
         if movies.isEmpty {
@@ -182,10 +185,17 @@ private extension MovieSearchViewController {
         }
         dataSource.apply(snapshot)
     }
-    
-    // TODO: - pagination 적용 시 데이터를 append하는 방식으로 개선
-    func updateSnapshot() {
+}
+
+//MARK: - CollectionView Delegate
+extension MovieSearchViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard let searchWord = searchBar.text,
+              let totalPage else { return }
         
+        if currentPage <= totalPage && indexPath.item == (movies.count - 2) {
+            loadSearchResults(query: searchWord, isInitial: false)
+        }
     }
 }
 

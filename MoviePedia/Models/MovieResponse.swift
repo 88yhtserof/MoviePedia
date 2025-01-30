@@ -10,6 +10,7 @@ import Foundation
 struct MovieResponse: Decodable {
     var page: Int
     var results: [Movie]
+    var total_pages: Int
 }
 
 
