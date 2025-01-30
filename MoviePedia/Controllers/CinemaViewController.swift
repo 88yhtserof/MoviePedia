@@ -16,10 +16,18 @@ final class CinemaViewController: BaseViewController {
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
+    private var snapshot: Snapshot!
     
     private var user: User { UserDefaultsManager.user! }
     private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
-    private var recentSearches: Set<RecentSearch> { UserDefaultsManager.recentSearches }
+    private var recentSearches: Set<RecentSearch> {
+        get {
+            UserDefaultsManager.recentSearches
+        }
+        set {
+            UserDefaultsManager.recentSearches = newValue
+        }
+    }
     private var todayMovies: [Movie] = []
     private var isUpdatingTodayMovieNeeded: Bool = false
     
@@ -63,9 +71,8 @@ final class CinemaViewController: BaseViewController {
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
     
-    @objc func pushToMovieSearchVC(_ searchWord: String?) {
-        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
-        navigationController?.pushViewController(movieSearchVC, animated: true)
+    @objc func searchBarButtonItemDidTapped() {
+        pushToMovieSearchVC()
     }
     
     @objc func updateRecentResults(_ notification: Notification) {
@@ -89,7 +96,11 @@ final class CinemaViewController: BaseViewController {
         } failureHandler: { error in
             print("Need to handle error")
         }
-
+    }
+    
+    func pushToMovieSearchVC(_ searchWord: String? = nil) {
+        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
+        navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
 
@@ -99,7 +110,7 @@ private extension CinemaViewController {
         searchBarButtonItem.tintColor = .moviepedia_point
         searchBarButtonItem.image = UIImage(systemName: "magnifyingglass")
         searchBarButtonItem.target = self
-        searchBarButtonItem.action = #selector(pushToMovieSearchVC)
+        searchBarButtonItem.action = #selector(searchBarButtonItemDidTapped)
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
@@ -277,6 +288,11 @@ extension CinemaViewController {
     func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: RecentSearch) {
         cell.configure(with: item.search)
         cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
+        cell.deleteAction = { [self] in
+            let deletedItem = item
+            self.recentSearches.remove(deletedItem)
+            self.createSnapshot()
+        }
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
@@ -297,7 +313,7 @@ extension CinemaViewController {
     }
     
     func createSnapshot() {
-        var snapshot = Snapshot()
+        snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
         if recentSearches.isEmpty {

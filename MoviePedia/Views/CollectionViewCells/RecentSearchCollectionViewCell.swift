@@ -12,8 +12,10 @@ final class RecentSearchCollectionViewCell: UICollectionViewCell {
     
     private let outerView = UIView()
     let titleButton = UIButton()
-    let deleteButton = UIButton()
+    private let deleteButton = UIButton()
     private lazy var stackView = UIStackView(arrangedSubviews: [titleButton, deleteButton])
+    
+    var deleteAction: (() -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -25,6 +27,10 @@ final class RecentSearchCollectionViewCell: UICollectionViewCell {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc func deleteButtonTapped() {
+        deleteAction?()
     }
     
     func configure(with string: String) {
@@ -44,6 +50,7 @@ private extension RecentSearchCollectionViewCell {
         let image = UIImage(systemName: "xmark")
         deleteButton.setImage(image, for: .normal)
         deleteButton.tintColor = .moviepedia_background
+        deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
         
         stackView.axis = .horizontal
         stackView.spacing = 6
