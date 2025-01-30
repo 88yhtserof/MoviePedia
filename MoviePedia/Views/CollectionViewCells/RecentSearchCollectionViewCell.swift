@@ -11,9 +11,9 @@ import SnapKit
 final class RecentSearchCollectionViewCell: UICollectionViewCell {
     
     private let outerView = UIView()
-    private let titleLabel = UILabel()
-    private let deleteButton = UIButton()
-    private lazy var stackView = UIStackView(arrangedSubviews: [titleLabel, deleteButton])
+    let titleButton = UIButton()
+    let deleteButton = UIButton()
+    private lazy var stackView = UIStackView(arrangedSubviews: [titleButton, deleteButton])
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -28,7 +28,8 @@ final class RecentSearchCollectionViewCell: UICollectionViewCell {
     }
     
     func configure(with string: String) {
-        titleLabel.text = string
+        let attiributedTitle = NSAttributedString(string: string, attributes: [ .font : UIFont.systemFont(ofSize: 14) ])
+        titleButton.setAttributedTitle(attiributedTitle, for: .normal)
     }
 }
 
@@ -38,9 +39,7 @@ private extension RecentSearchCollectionViewCell {
         outerView.backgroundColor = .moviepedia_tagbackground
         outerView.cornerRadius(15)
         
-        titleLabel.textColor = .moviepedia_background
-        titleLabel.font = .systemFont(ofSize: 14)
-        titleLabel.textAlignment = .center
+        titleButton.setTitleColor(.moviepedia_background, for: .normal)
         
         let image = UIImage(systemName: "xmark")
         deleteButton.setImage(image, for: .normal)

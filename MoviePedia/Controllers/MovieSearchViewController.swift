@@ -21,6 +21,20 @@ final class MovieSearchViewController: BaseViewController {
     private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
     private var page: Int = 1
     
+    init(searchWord: String? = nil) {
+        super.init(nibName: nil, bundle: nil)
+        if let searchWord {
+            searchBar.text = searchWord
+            loadSearchResults(query: searchWord)
+        } else {
+            searchBar.becomeFirstResponder()
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         

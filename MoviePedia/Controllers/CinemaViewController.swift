@@ -63,8 +63,8 @@ final class CinemaViewController: BaseViewController {
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
     
-    @objc func pushToMovieSearchVC() {
-        let movieSearchVC = MovieSearchViewController()
+    @objc func pushToMovieSearchVC(_ searchWord: String?) {
+        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
     
@@ -75,6 +75,10 @@ final class CinemaViewController: BaseViewController {
     @objc func updateLikedMovie(_ notification: Notification) {
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
         isUpdatingTodayMovieNeeded = true
+    }
+    
+    @objc func recentSearchesButtonTapped(_ sender: UIButton) {
+        pushToMovieSearchVC(sender.attributedTitle(for: .normal)?.string)
     }
     
     private func loadTodayMovies() {
@@ -272,6 +276,7 @@ extension CinemaViewController {
     
     func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: RecentSearch) {
         cell.configure(with: item.search)
+        cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
@@ -292,7 +297,6 @@ extension CinemaViewController {
     }
     
     func createSnapshot() {
-        print(#function)
         var snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
