@@ -20,10 +20,7 @@ final class CinemaViewController: BaseViewController {
     
     private var user: User { UserDefaultsManager.user! }
     private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
-    private var recentSearches: [String] = UserDefaultsManager.recentSearches {
-        didSet {
-            createSnapshot()        }
-    }
+    private var recentSearches: Set<RecentSearch> { UserDefaultsManager.recentSearches }
     private var todayMovies: [Movie] = []
     private var isUpdatingTodayMovieNeeded: Bool = false
     
@@ -54,7 +51,7 @@ final class CinemaViewController: BaseViewController {
     
     @objc func removeAllRecentSearches() {
         UserDefaultsManager.recentSearches = []
-        recentSearches = []
+        createSnapshot()
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
@@ -73,8 +70,7 @@ final class CinemaViewController: BaseViewController {
     }
     
     @objc func updateRecentResults(_ notification: Notification) {
-        guard let recentSearch = notification.userInfo?["recentSearch"] as? String else { return }
-        recentSearches.append(recentSearch)
+        isUpdatingTodayMovieNeeded = true
     }
     
     @objc func updateLikedMovie(_ notification: Notification) {
@@ -245,10 +241,10 @@ extension CinemaViewController {
     
     struct Item: Hashable {
         let empty: String?
-        let recentSearch: String?
+        let recentSearch: RecentSearch?
         let todayMovie: Movie?
         
-        private init(empty: String?, recentSearch: String?, todayMovie: Movie?) {
+        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: Movie?) {
             self.empty = empty
             self.recentSearch = recentSearch
             self.todayMovie = todayMovie
@@ -258,7 +254,7 @@ extension CinemaViewController {
             self.init(empty: empty, recentSearch: nil, todayMovie: nil)
         }
         
-        init(recentSearch: String) {
+        init(recentSearch: RecentSearch) {
             self.init(empty: nil, recentSearch: recentSearch, todayMovie: nil)
         }
         
@@ -275,8 +271,8 @@ extension CinemaViewController {
         cell.configure(with: item)
     }
     
-    func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: String) {
-        cell.configure(with: item)
+    func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: RecentSearch) {
+        cell.configure(with: item.search)
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
@@ -304,7 +300,7 @@ extension CinemaViewController {
             let items = [Item(empty: "최근 검색 내역이 없습니다.")]
             snapshot.appendItems(items, toSection: .emptyRecentSearch)
         } else {
-            let items = recentSearches.map{ Item(recentSearch: $0) }
+            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item(recentSearch: $0) }
             snapshot.appendItems(items, toSection: .recentSeach)
         }
         let items = todayMovies.map{ Item(todayMovie: $0) }

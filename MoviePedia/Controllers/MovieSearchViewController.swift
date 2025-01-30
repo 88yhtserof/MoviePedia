@@ -43,14 +43,17 @@ final class MovieSearchViewController: BaseViewController {
 
     }
     
-    private func updateRecentResults(_ recentSearch: String) {
+    private func updateRecentResults(_ recentSearch: RecentSearch) {
         var recentSearches = UserDefaultsManager.recentSearches
-        recentSearches.append(recentSearch)
+        if recentSearches.contains(recentSearch) {
+            recentSearches.remove(recentSearch)
+        }
+        recentSearches.insert(recentSearch)
         UserDefaultsManager.recentSearches = recentSearches
     }
     
-    private func postRecentSearchNotification(_ resentSearch: String) {
-        NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil, userInfo: ["recentSearch": resentSearch])
+    private func postRecentSearchNotification(_ recentSearch: RecentSearch) {
+        NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil)
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
@@ -214,7 +217,8 @@ extension MovieSearchViewController: UISearchBarDelegate {
         view.endEditing(true)
         guard let query = searchBar.text else { return }
         loadSearchResults(query: query)
-        updateRecentResults(query)
-        postRecentSearchNotification(query)
+        let recentSearch = RecentSearch(search: query, date: Date())
+        updateRecentResults(recentSearch)
+        postRecentSearchNotification(recentSearch)
     }
 }
