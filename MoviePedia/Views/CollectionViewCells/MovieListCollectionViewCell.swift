@@ -17,6 +17,7 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     private lazy var titleInfoStackView = UIStackView(arrangedSubviews: [titleLabel, dateLabel])
     private let firGenreLabel = RoundLabel()
     private let secGenreLabel = RoundLabel()
+    private let anotherGenreLabel = UILabel()
     private lazy var genreStackView = UIStackView(arrangedSubviews: [firGenreLabel, secGenreLabel])
     let likeButton = LikeSelectedButton()
     private let separatorView = UIView()
@@ -42,14 +43,22 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     
     func configure(with todayMovie: TodayMovie) {
         
-        guard let title = todayMovie.movie.title,
-              let release_date = todayMovie.movie.release_date,
-              let genre_ids = todayMovie.movie.genre_ids else { return }
-        titleLabel.text = title
-        dateLabel.text = DateFormatterManager.shared.string(from: release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
-        if genre_ids.count >= 2 {
-            firGenreLabel.text = Genre(rawValue: genre_ids[0])?.name_kr
-            secGenreLabel.text = Genre(rawValue: genre_ids[1])?.name_kr
+        if let title = todayMovie.movie.title {
+            titleLabel.text = title
+        }
+        
+        if let release_date = todayMovie.movie.release_date {
+            dateLabel.text = DateFormatterManager.shared.string(from: release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
+        }
+        
+        if let genre_ids = todayMovie.movie.genre_ids {
+            genre_ids
+                .prefix(2)
+                .compactMap{ Genre(rawValue: $0) }
+                .enumerated()
+                .forEach { (i, genre) in
+                    (genreStackView.arrangedSubviews[i] as! RoundLabel).text = genre.name_kr
+                }
         }
         
         if let path = todayMovie.movie.poster_path,
