@@ -220,10 +220,12 @@ private extension CinemaViewController {
     
     func sectionForTodayMovie() -> NSCollectionLayoutSection  {
         let (offset, sectionInset, recentSearch, header) = (8.0, 10.0, 30.0, 50.0)
-        let height = collectionView.frame.height - (offset * 2 + sectionInset + recentSearch + header * 2)
+        let height = collectionView.frame.height - (offset * 2 + sectionInset * 2 + recentSearch + header * 2)
+        let width: CGFloat = (3.0 * height) / 5.0
         
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.6), heightDimension: .absolute(height))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: .absolute(height))
+        
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         let section = NSCollectionLayoutSection(group: group)
