@@ -39,6 +39,8 @@ final class MovieDetailInfoSupplementaryView: UICollectionReusableView {
 private extension MovieDetailInfoSupplementaryView {
     private func configureViews() {
         
+        pageControl.backgroundColor = .moviepedia_background.withAlphaComponent(0.3)
+        pageControl.cornerRadius(13)
         pageControl.numberOfPages = 3
         pageControl.currentPage = 0
         
