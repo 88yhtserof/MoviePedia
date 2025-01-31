@@ -21,6 +21,7 @@ final class MovieSearchViewController: BaseViewController {
     private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
     private var currentPage: Int = 1
     private var totalPage: Int?
+    private var currentSearchWord: String?
     
     init(searchWord: String? = nil) {
         super.init(nibName: nil, bundle: nil)
@@ -46,7 +47,10 @@ final class MovieSearchViewController: BaseViewController {
     }
     
     private func loadSearchResults(query: String, isInitial: Bool = true) {
-        if isInitial { movies = [] }
+        if isInitial {
+            currentPage = 1
+            movies = []
+        }
         
         let request = SearchRequest(query: query, page: currentPage)
         networkManager.request(api: .search(request)) { (value: MovieResponse) in
@@ -254,7 +258,8 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         view.endEditing(true)
-        guard let query = searchBar.text else { return }
+        guard let query = searchBar.text, currentSearchWord != query else { return }
+        currentSearchWord = query
         loadSearchResults(query: query)
         let recentSearch = RecentSearch(search: query, date: Date())
         updateRecentResults(recentSearch)

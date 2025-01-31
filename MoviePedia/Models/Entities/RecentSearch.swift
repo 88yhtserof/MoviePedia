@@ -7,11 +7,7 @@
 
 import Foundation
 
-struct RecentSearch: Hashable, Equatable, Codable {
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.search == rhs.search
-    }
-    
+struct RecentSearch: Hashable, Codable {
     var search: String
     var date: Date
 }
