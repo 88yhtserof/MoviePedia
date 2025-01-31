@@ -8,6 +8,9 @@
 import UIKit
 import SnapKit
 
+
+
+
 final class MovieDetailViewController: BaseViewController {
     
     let imageList = [
@@ -15,6 +18,8 @@ final class MovieDetailViewController: BaseViewController {
         "/y9HpPnZUkygFishCcYDOpzHgdD5.jpg",
         "/faawswmpK7mGhPtiVjdPWVJ6Vld.jpg"
     ]
+    
+    let cast = [Cast(name: "김다미", character: "Koo Ja-yoon", profile_path: "/nRGhwfuWqcTMoTmnhK4XmcRkZ6B.jpg"), Cast(name: "조민수", character: "Dr. Baek", profile_path: "/1dC0ZRTWlvFEcDk4O6peI97zsVM.jpg"), Cast(name:  "박희순", character: "Mr. Choi", profile_path: "/s2SSzvlsSfCPP5EXhCoWUr8970F.jpg"), Cast(name: "고민시", character: "Do Myeong-hee", profile_path: "/w6GAqYilB3ej5Had7rfc6grLHPB.jpg"), Cast(name: "최정우", character: "Koo Seong-hwan", profile_path: "/doHUwUDRML1uo0PVVRXblGAJhN3.jpg"), Cast(name: "오미희", character: "Koo's wife", profile_path: "/js6ztmJnh3hlLEDm9nX6P3b1zbO.jpg"), Cast(name: "정다은", character: "Long Hair", profile_path: "/yAqywl2JDji5H9lxpdmOFIVvQTY.jpg")]
     
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
@@ -51,6 +56,7 @@ private extension MovieDetailViewController {
     func configureCollectionViewDataSource() {
         let backdropCellRegistration = UICollectionView.CellRegistration(handler: backdropCellRegistrationHandler)
         let synopsisCellRegistration = UICollectionView.CellRegistration(handler: synopsisCellRegistrationHandler)
+        let castCellRegistration = UICollectionView.CellRegistration(handler: castCellRegistrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
             guard let section = Section(rawValue: indexPath.section) else {
@@ -62,6 +68,8 @@ private extension MovieDetailViewController {
                 cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop)
             case .synopsys:
                 cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis)
+            case .cast:
+                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast)
             }
             
             return cell
@@ -91,7 +99,7 @@ private extension MovieDetailViewController {
     enum Section: Int {
         case backdrop
         case synopsys
-//        case cast
+        case cast
 //        case poster
         
         var header: String? {
@@ -100,6 +108,8 @@ private extension MovieDetailViewController {
                 return nil
             case .synopsys:
                 return "Synopsis"
+            case .cast:
+                return "Cast"
             }
         }
     }
@@ -107,18 +117,24 @@ private extension MovieDetailViewController {
     struct Item: Hashable {
         let backdrop: String?
         let synopsis: String?
+        let cast: Cast?
         
-        private init(backdrop: String?, synopsis: String?) {
+        private init(backdrop: String?, synopsis: String?, cast: Cast?) {
             self.backdrop = backdrop
             self.synopsis = synopsis
+            self.cast = cast
         }
         
         init(backdrop: String) {
-            self.init(backdrop: backdrop, synopsis: nil)
+            self.init(backdrop: backdrop, synopsis: nil, cast: nil)
         }
         
         init(synopsis: String) {
-            self.init(backdrop: nil, synopsis: synopsis)
+            self.init(backdrop: nil, synopsis: synopsis, cast: nil)
+        }
+        
+        init(cast: Cast) {
+            self.init(backdrop: nil, synopsis: nil, cast: cast)
         }
     }
     
@@ -135,6 +151,10 @@ private extension MovieDetailViewController {
     func synopsisCellRegistrationHandler(cell: TextCollectionViewCell, indexPath: IndexPath, item: String) {
         cell.text = item
         cell.numberOfLines = 3
+    }
+    
+    func castCellRegistrationHandler(cell: CastCollectionViewCell, indexPath: IndexPath, item: Cast) {
+        cell.configure(with: item)
     }
     
     func movieDeatilInfoSupplemetaryRegistrationHandler(supplementaryView: MovieDetailInfoSupplementaryView, string: String, indexPath: IndexPath) {
@@ -160,6 +180,8 @@ private extension MovieDetailViewController {
             moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
             supplementaryView.addRightAccessoryView(moreButton)
             supplementaryView.configure(with: section.header!)
+        case .cast:
+            supplementaryView.configure(with: section.header!)
         }
     }
     
@@ -181,10 +203,13 @@ private extension MovieDetailViewController {
     func createSnapshot() {
         let backdropItems = imageList.map{ Item(backdrop: $0) }
         let synopsysItems = [Item(synopsis: "’자윤’이 사라진 뒤, 정체불명의 집단의 무차별 습격으로 마녀 프로젝트가 진행되고 있는 ‘아크’가 초토화된다. 그곳에서 홀로 살아남은 ‘소녀’는 생애 처음 세상 밖으로 발을 내딛고 우연히 만난 ‘경희’의 도움으로 농장에서 지내며 따뜻한 일상에 적응해간다. 한편, ‘소녀’가 망실되자 행방을 쫓는 책임자 ‘장’과 마녀 프로젝트의 창시자 ‘백총괄’의 지령을 받고 제거에 나선 본사 요원 ‘조현’, ‘경희’의 농장 소유권을 노리는 조직의 보스 ‘용두’와 상해에서 온 의문의 4인방까지 각기 다른 목적을 지닌 세력이 하나 둘 모여들기 시작하면서 ‘소녀’ 안에 숨겨진 본성이 깨어나는데… 모든 것의 시작, 더욱 거대하고 강력해진 마녀가 온다.")]
+        let castItems = cast.map{ Item(cast: $0) }
+        
         snapshot = Snapshot()
-        snapshot.appendSections([.backdrop, .synopsys])
+        snapshot.appendSections([.backdrop, .synopsys, .cast])
         snapshot.appendItems(backdropItems, toSection: .backdrop)
         snapshot.appendItems(synopsysItems, toSection: .synopsys)
+        snapshot.appendItems(castItems, toSection: .cast)
         dataSource.apply(snapshot)
     }
 }
@@ -219,8 +244,8 @@ private extension MovieDetailViewController {
             return sectionForBackdrop()
         case .synopsys:
             return sectionForSynopsys()
-//        case .cast:
-//            return sectionForCast()
+        case .cast:
+            return sectionForCast()
 //        case .poster:
 //            return sectionForPoster()
         }
@@ -245,18 +270,20 @@ private extension MovieDetailViewController {
         section.boundarySupplementaryItems = [titleBoundarySupplementaryItem()]
         return section
     }
-//    
-//    func sectionForCast() -> NSCollectionLayoutSection {
-//        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.4), heightDimension: .absolute(50))
-//        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.4), heightDimension: .absolute(120))
-//        
-//        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-//        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-//        
-//        let section = NSCollectionLayoutSection(group: group)
-//        section.orthogonalScrollingBehavior = .continuous
-//        return section
-//    }
+    
+    func sectionForCast() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(0.5))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.45), heightDimension: .estimated(130))
+        
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item, item])
+        group.interItemSpacing = .fixed(8)
+        
+        let section = NSCollectionLayoutSection(group: group)
+        section.orthogonalScrollingBehavior = .continuous
+        section.boundarySupplementaryItems = [titleBoundarySupplementaryItem()]
+        return section
+    }
 //    
 //    func sectionForPoster() -> NSCollectionLayoutSection {
 //        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
