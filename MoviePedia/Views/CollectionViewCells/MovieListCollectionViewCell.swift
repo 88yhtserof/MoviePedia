@@ -41,11 +41,15 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     }
     
     func configure(with todayMovie: TodayMovie) {
-        titleLabel.text = todayMovie.movie.title
-        dateLabel.text = DateFormatterManager.shared.string(from: todayMovie.movie.release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
-        if todayMovie.movie.genre_ids.count >= 2 {
-            firGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[0])?.name_kr
-            secGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[1])?.name_kr
+        
+        guard let title = todayMovie.movie.title,
+              let release_date = todayMovie.movie.release_date,
+              let genre_ids = todayMovie.movie.genre_ids else { return }
+        titleLabel.text = title
+        dateLabel.text = DateFormatterManager.shared.string(from: release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
+        if genre_ids.count >= 2 {
+            firGenreLabel.text = Genre(rawValue: genre_ids[0])?.name_kr
+            secGenreLabel.text = Genre(rawValue: genre_ids[1])?.name_kr
         }
         
         if let path = todayMovie.movie.poster_path,
