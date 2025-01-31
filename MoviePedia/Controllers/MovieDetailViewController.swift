@@ -32,6 +32,17 @@ final class MovieDetailViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
+    private let movie: Movie
+    
+    init(movie: Movie) {
+        self.movie = movie
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -45,6 +56,8 @@ final class MovieDetailViewController: BaseViewController {
 //MARK: - Configuration
 private extension MovieDetailViewController {
     func configureViews() {
+        navigationItem.title = movie.title
+        
         collectionView.backgroundColor = .moviepedia_background
         collectionView.delegate = self
     }
@@ -175,9 +188,11 @@ private extension MovieDetailViewController {
     
     func movieDeatilInfoSupplemetaryRegistrationHandler(supplementaryView: MovieDetailInfoSupplementaryView, string: String, indexPath: IndexPath) {
         if indexPath.section == 0 {
-            let dateStr = "2024-12-24"
-            let ratingStr = "8.0"
-            let genreStr = String(format: "%@, %@", "액션", "스릴러")
+            // TODO: - Movie 작업 모델로 분리
+            let dateStr = movie.release_date ?? "_"
+            let ratingStr = String(movie.vote_average ?? 0.0)
+            let genres = (movie.genre_ids?.prefix(2).compactMap{ Genre(rawValue: $0)?.name_kr }) ?? []
+            let genreStr = genres.joined(separator: ", ")
             supplementaryView.configure(with: [dateStr, ratingStr, genreStr])
         }
     }
@@ -220,7 +235,7 @@ private extension MovieDetailViewController {
     
     func createSnapshot() {
         let backdropItems = imageList.map{ Item(backdrop: $0) }
-        let synopsysItems = [Item(synopsis: "’자윤’이 사라진 뒤, 정체불명의 집단의 무차별 습격으로 마녀 프로젝트가 진행되고 있는 ‘아크’가 초토화된다. 그곳에서 홀로 살아남은 ‘소녀’는 생애 처음 세상 밖으로 발을 내딛고 우연히 만난 ‘경희’의 도움으로 농장에서 지내며 따뜻한 일상에 적응해간다. 한편, ‘소녀’가 망실되자 행방을 쫓는 책임자 ‘장’과 마녀 프로젝트의 창시자 ‘백총괄’의 지령을 받고 제거에 나선 본사 요원 ‘조현’, ‘경희’의 농장 소유권을 노리는 조직의 보스 ‘용두’와 상해에서 온 의문의 4인방까지 각기 다른 목적을 지닌 세력이 하나 둘 모여들기 시작하면서 ‘소녀’ 안에 숨겨진 본성이 깨어나는데… 모든 것의 시작, 더욱 거대하고 강력해진 마녀가 온다.")]
+        let synopsysItems = [Item(synopsis: movie.overview ?? "")]
         let castItems = cast.map{ Item(cast: $0) }
         let posterItems: [Item] = posterList.map{ Item(poster: $0) }
         
