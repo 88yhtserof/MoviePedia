@@ -205,6 +205,12 @@ private extension MovieSearchViewController {
 
 //MARK: - CollectionView Delegate
 extension MovieSearchViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
+        navigationController?.pushViewController(movieDetailVC, animated: true)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let searchWord = searchBar.text,
               let totalPage else { return }
