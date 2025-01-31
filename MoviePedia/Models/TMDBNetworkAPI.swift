@@ -10,6 +10,7 @@ import Alamofire
 
 enum TMDBNetworkAPI {
     case treding(TrendingRequest)
+    case search(SearchRequest)
     
     static let authorizationKey = AuthorizationKeyManager.tmdb.apiKey ?? ""
     static let imageBaseURL = "https://image.tmdb.org/t/p/w500"
@@ -23,6 +24,8 @@ enum TMDBNetworkAPI {
         switch self {
         case .treding(let request):
             path = "trending/movie/\(request.time_window)"
+        case .search:
+            path = "search/movie"
         }
         return URL(string: baseURL + path)
     }
@@ -35,12 +38,16 @@ enum TMDBNetworkAPI {
         switch self {
         case .treding:
             return .get
+        case .search:
+            return .get
         }
     }
     
     var parameters: Parameters {
         switch self {
         case .treding(let request):
+            return request.parameters
+        case .search(let request):
             return request.parameters
         }
     }

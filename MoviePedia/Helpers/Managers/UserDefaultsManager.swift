@@ -45,12 +45,19 @@ enum UserDefaultsManager {
         }
     }
     
-    static var recentSearches: [String] {
+    static var recentSearches: Set<RecentSearch> {
         get {
-            return UserDefaults.standard.stringArray(forKey: Key.recentSearches.defaultName) ?? []
+            guard let data = UserDefaults.standard.data(forKey: Key.recentSearches.defaultName),
+                  let decoded = try? JSONDecoder().decode(Set<RecentSearch>.self, from: data) else { return Set<RecentSearch>() }
+            return decoded
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Key.recentSearches.defaultName)
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                UserDefaults.standard.set(data, forKey: Key.recentSearches.defaultName)
+            } catch {
+                print("ERROR:", error)
+            }
         }
     }
 }

@@ -41,7 +41,8 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
         likeButton.isSelected = todayMovie.isLiked
         likeButton.tag = todayMovie.index
         
-        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + todayMovie.movie.poster_path) {
+        if let path = todayMovie.movie.poster_path,
+           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             posterImageView.kf.setImage(with: imageURL)
         }
     }

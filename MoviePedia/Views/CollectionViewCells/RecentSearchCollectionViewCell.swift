@@ -11,9 +11,11 @@ import SnapKit
 final class RecentSearchCollectionViewCell: UICollectionViewCell {
     
     private let outerView = UIView()
-    private let titleLabel = UILabel()
+    let titleButton = UIButton()
     private let deleteButton = UIButton()
-    private lazy var stackView = UIStackView(arrangedSubviews: [titleLabel, deleteButton])
+    private lazy var stackView = UIStackView(arrangedSubviews: [titleButton, deleteButton])
+    
+    var deleteAction: (() -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -27,8 +29,13 @@ final class RecentSearchCollectionViewCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    @objc func deleteButtonTapped() {
+        deleteAction?()
+    }
+    
     func configure(with string: String) {
-        titleLabel.text = string
+        let attiributedTitle = NSAttributedString(string: string, attributes: [ .font : UIFont.systemFont(ofSize: 14) ])
+        titleButton.setAttributedTitle(attiributedTitle, for: .normal)
     }
 }
 
@@ -38,13 +45,12 @@ private extension RecentSearchCollectionViewCell {
         outerView.backgroundColor = .moviepedia_tagbackground
         outerView.cornerRadius(15)
         
-        titleLabel.textColor = .moviepedia_background
-        titleLabel.font = .systemFont(ofSize: 14)
-        titleLabel.textAlignment = .center
+        titleButton.setTitleColor(.moviepedia_background, for: .normal)
         
         let image = UIImage(systemName: "xmark")
         deleteButton.setImage(image, for: .normal)
         deleteButton.tintColor = .moviepedia_background
+        deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
         
         stackView.axis = .horizontal
         stackView.spacing = 6

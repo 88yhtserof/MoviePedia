@@ -26,15 +26,13 @@ class ProfileInfoView: UIView {
         configureViews()
         configureHierarchy()
         configureConstraints()
-        NotificationCenter.default.addObserver(self, selector: #selector(updateLikedMoviesCount), name: NSNotification.Name("likedMovie"), object: nil)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    @objc func updateLikedMoviesCount(_ notification: Notification) {
-        guard let count = notification.userInfo?["likedMoviesCount"] as? Int else { return }
+    func updateLikedMoviesCount(_ count: Int) {
         var config = movieBoxButton.configuration
         config?.title = String(format: "%d개인 무비박스 보관 중", count)
         movieBoxButton.configuration = config

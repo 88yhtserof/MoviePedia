@@ -18,9 +18,18 @@ final class CinemaViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var user = UserDefaultsManager.user!
-    private var recentSearches: [String] = UserDefaultsManager.recentSearches
+    private var user: User { UserDefaultsManager.user! }
+    private var likedMovies: Set<Movie> { UserDefaultsManager.user!.likedMovies }
+    private var recentSearches: Set<RecentSearch> {
+        get {
+            UserDefaultsManager.recentSearches
+        }
+        set {
+            UserDefaultsManager.recentSearches = newValue
+        }
+    }
     private var todayMovies: [Movie] = []
+    private var isUpdatingTodayMovieNeeded: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,8 +37,18 @@ final class CinemaViewController: BaseViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
+        configureNotificationObserver()
         configureCollectionViewDataSource()
         loadTodayMovies()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if isUpdatingTodayMovieNeeded {
+            createSnapshot()
+            isUpdatingTodayMovieNeeded = false
+        }
     }
     
     @objc func presentProfileEditVC() {
@@ -39,29 +58,49 @@ final class CinemaViewController: BaseViewController {
     
     @objc func removeAllRecentSearches() {
         UserDefaultsManager.recentSearches = []
-        recentSearches = []
+        createSnapshot()
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
         let movie = todayMovies[sender.tag]
         if sender.isSelected {
-            user.likedMovies.insert(movie)
+            UserDefaultsManager.user!.likedMovies.insert(movie)
         } else {
-            user.likedMovies.remove(movie)
+            UserDefaultsManager.user!.likedMovies.remove(movie)
         }
-        UserDefaultsManager.user = user
-        NotificationCenter.default.post(name: NSNotification.Name("likedMovie"), object: nil, userInfo: ["likedMoviesCount": user.likedMovies.count])
+        profileInfoView.updateLikedMoviesCount(likedMovies.count)
+    }
+    
+    @objc func searchBarButtonItemDidTapped() {
+        pushToMovieSearchVC()
+    }
+    
+    @objc func updateRecentResults(_ notification: Notification) {
+        isUpdatingTodayMovieNeeded = true
+    }
+    
+    @objc func updateLikedMovie(_ notification: Notification) {
+        profileInfoView.updateLikedMoviesCount(likedMovies.count)
+        isUpdatingTodayMovieNeeded = true
+    }
+    
+    @objc func recentSearchesButtonTapped(_ sender: UIButton) {
+        pushToMovieSearchVC(sender.attributedTitle(for: .normal)?.string)
     }
     
     private func loadTodayMovies() {
         let trendingRequest = TrendingRequest()
-        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: TrendingResponse) in
+        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
             self.todayMovies = trending.results
-            self.updateSnapshot(for: .todayMovie)
+            self.createSnapshot()
         } failureHandler: { error in
             print("Need to handle error")
         }
-
+    }
+    
+    func pushToMovieSearchVC(_ searchWord: String? = nil) {
+        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
+        navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
 
@@ -70,6 +109,8 @@ private extension CinemaViewController {
     func configureViews() {
         searchBarButtonItem.tintColor = .moviepedia_point
         searchBarButtonItem.image = UIImage(systemName: "magnifyingglass")
+        searchBarButtonItem.target = self
+        searchBarButtonItem.action = #selector(searchBarButtonItemDidTapped)
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
@@ -98,6 +139,11 @@ private extension CinemaViewController {
             make.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
             make.bottom.equalTo(view.safeAreaLayoutGuide).inset(8)
         }
+    }
+    
+    func configureNotificationObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(updateRecentResults), name: NSNotification.Name("RecentSearch"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateLikedMovie), name: NSNotification.Name("LikedMovie"), object: nil)
     }
     
     func configureCollectionViewDataSource() {
@@ -209,10 +255,10 @@ extension CinemaViewController {
     
     struct Item: Hashable {
         let empty: String?
-        let recentSearch: String?
+        let recentSearch: RecentSearch?
         let todayMovie: Movie?
         
-        private init(empty: String?, recentSearch: String?, todayMovie: Movie?) {
+        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: Movie?) {
             self.empty = empty
             self.recentSearch = recentSearch
             self.todayMovie = todayMovie
@@ -222,7 +268,7 @@ extension CinemaViewController {
             self.init(empty: empty, recentSearch: nil, todayMovie: nil)
         }
         
-        init(recentSearch: String) {
+        init(recentSearch: RecentSearch) {
             self.init(empty: nil, recentSearch: recentSearch, todayMovie: nil)
         }
         
@@ -239,12 +285,18 @@ extension CinemaViewController {
         cell.configure(with: item)
     }
     
-    func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: String) {
-        cell.configure(with: item)
+    func recentSearchCellRegidtrationHandler(cell: RecentSearchCollectionViewCell, indexPath: IndexPath, item: RecentSearch) {
+        cell.configure(with: item.search)
+        cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
+        cell.deleteAction = { [self] in
+            let deletedItem = item
+            self.recentSearches.remove(deletedItem)
+            self.createSnapshot()
+        }
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        let isLiked = user.likedMovies.isSuperset(of: [item])
+        let isLiked = user.likedMovies.contains(where: { $0.id == item.id })
         let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
         cell.configure(with: todayMovie)
         cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
@@ -268,7 +320,7 @@ extension CinemaViewController {
             let items = [Item(empty: "최근 검색 내역이 없습니다.")]
             snapshot.appendItems(items, toSection: .emptyRecentSearch)
         } else {
-            let items = recentSearches.map{ Item(recentSearch: $0) }
+            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item(recentSearch: $0) }
             snapshot.appendItems(items, toSection: .recentSeach)
         }
         let items = todayMovies.map{ Item(todayMovie: $0) }
@@ -277,19 +329,7 @@ extension CinemaViewController {
         dataSource.apply(snapshot)
     }
     
+    // TODO: - 데이터 갱신 로직 개선 후 적용
     func updateSnapshot(for section: Section) {
-        var items: [Item]
-        switch section {
-        case .emptyRecentSearch:
-            items = [Item(empty: "최근 검색 내역이 없습니다.")]
-        case .recentSeach:
-            items = recentSearches.map{ Item(recentSearch: $0) }
-        case .todayMovie:
-            items = todayMovies.map{ Item(todayMovie: $0) }
-        }
-        snapshot.appendItems(items, toSection: section)
-        snapshot.reloadSections([section])
-        dataSource.apply(snapshot)
-        
     }
 }
