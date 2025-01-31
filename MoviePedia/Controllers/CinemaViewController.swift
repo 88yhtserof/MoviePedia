@@ -115,8 +115,9 @@ private extension CinemaViewController {
         
         profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
-        collectionView.backgroundColor = .clear
+        collectionView.backgroundColor = .moviepedia_background
         collectionView.isScrollEnabled = false
+        collectionView.delegate = self
     }
     
     func configureHierarchy() {
@@ -331,5 +332,13 @@ extension CinemaViewController {
     
     // TODO: - 데이터 갱신 로직 개선 후 적용
     func updateSnapshot(for section: Section) {
+    }
+}
+
+//MARK: - CollectionView Delegate
+extension CinemaViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let movieDetailViewController = MovieDetailViewController(movie: todayMovies[indexPath.row])
+        navigationController?.pushViewController(movieDetailViewController, animated: true)
     }
 }
