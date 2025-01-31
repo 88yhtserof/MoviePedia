@@ -338,7 +338,7 @@ extension CinemaViewController {
 //MARK: - CollectionView Delegate
 extension CinemaViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let movieDetailViewController = MovieDetailViewController(movie: todayMovies[indexPath.row])
-        navigationController?.pushViewController(movieDetailViewController, animated: true)
+        let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
+        navigationController?.pushViewController(movieDetailVC, animated: true)
     }
 }
