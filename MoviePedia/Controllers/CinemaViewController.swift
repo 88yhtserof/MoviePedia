@@ -12,7 +12,6 @@ final class CinemaViewController: BaseViewController {
     
     private lazy var profileInfoView = ProfileInfoView(user: user)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
-    private let recentSearchesRemoveAllButton = UIButton()
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
@@ -118,10 +117,6 @@ private extension CinemaViewController {
         
         collectionView.backgroundColor = .clear
         collectionView.isScrollEnabled = false
-        
-        recentSearchesRemoveAllButton.setTitle("전체 삭제", for: .normal)
-        recentSearchesRemoveAllButton.setTitleColor(.moviepedia_point, for: .normal)
-        recentSearchesRemoveAllButton.addTarget(self, action: #selector(removeAllRecentSearches), for: .touchUpInside)
     }
     
     func configureHierarchy() {
@@ -307,7 +302,10 @@ extension CinemaViewController {
             supplementaryView.configure(with: "오늘의 영화")
             
         } else {
-            supplementaryView.addRightAccessoryView(recentSearchesRemoveAllButton)
+            let removeAllButton = UIButton()
+            removeAllButton.configuration = UIButton.Configuration.headerAccessoryButton("전체 삭제")
+            removeAllButton.addTarget(self, action: #selector(removeAllRecentSearches), for: .touchUpInside)
+            supplementaryView.addRightAccessoryView(removeAllButton)
             supplementaryView.configure(with: "최근 검색어")
         }
     }
