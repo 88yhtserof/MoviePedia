@@ -17,6 +17,7 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     private lazy var titleInfoStackView = UIStackView(arrangedSubviews: [titleLabel, dateLabel])
     private let firGenreLabel = RoundLabel()
     private let secGenreLabel = RoundLabel()
+    private let anotherGenreLabel = UILabel()
     private lazy var genreStackView = UIStackView(arrangedSubviews: [firGenreLabel, secGenreLabel])
     let likeButton = LikeSelectedButton()
     private let separatorView = UIView()
@@ -40,21 +41,33 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
         likeButton.tag = 0
     }
     
-    func configure(with todayMovie: TodayMovie) {
-        titleLabel.text = todayMovie.movie.title
-        dateLabel.text = DateFormatterManager.shared.string(from: todayMovie.movie.release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
-        if todayMovie.movie.genre_ids.count >= 2 {
-            firGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[0])?.name_kr
-            secGenreLabel.text = Genre(rawValue: todayMovie.movie.genre_ids[1])?.name_kr
+    func configure(with movieInfo: MovieInfo) {
+        
+        if let title = movieInfo.movie.title {
+            titleLabel.text = title
         }
         
-        if let path = todayMovie.movie.poster_path,
+        if let release_date = movieInfo.movie.release_date {
+            dateLabel.text = DateFormatterManager.shared.string(from: release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
+        }
+        
+        if let genre_ids = movieInfo.movie.genre_ids {
+            genre_ids
+                .prefix(2)
+                .compactMap{ Genre(rawValue: $0) }
+                .enumerated()
+                .forEach { (i, genre) in
+                    (genreStackView.arrangedSubviews[i] as! RoundLabel).text = genre.name_kr
+                }
+        }
+        
+        if let path = movieInfo.movie.poster_path,
            let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             posterImageView.kf.setImage(with: imageURL)
         }
         
-        likeButton.isSelected = todayMovie.isLiked
-        likeButton.tag = todayMovie.index
+        likeButton.isSelected = movieInfo.isLiked
+        likeButton.tag = movieInfo.movie.id
     }
     
 }

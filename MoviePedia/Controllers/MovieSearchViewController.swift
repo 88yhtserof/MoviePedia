@@ -18,18 +18,15 @@ final class MovieSearchViewController: BaseViewController {
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
-    private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
+    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
     private var currentPage: Int = 1
     private var totalPage: Int?
+    private var currentSearchWord: String?
+    private let recenteSearchedWord: String?
     
     init(searchWord: String? = nil) {
+        recenteSearchedWord = searchWord
         super.init(nibName: nil, bundle: nil)
-        if let searchWord {
-            searchBar.text = searchWord
-            loadSearchResults(query: searchWord)
-        } else {
-            searchBar.becomeFirstResponder()
-        }
     }
     
     required init?(coder: NSCoder) {
@@ -43,10 +40,27 @@ final class MovieSearchViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
+        
+        if let recenteSearchedWord {
+            searchBar.text = recenteSearchedWord
+            loadSearchResults(query: recenteSearchedWord)
+        }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if recenteSearchedWord == nil && (searchBar.text?.isEmpty ?? true) {
+            DispatchQueue.main.async() {
+                self.searchBar.becomeFirstResponder()
+            }
+        }
     }
     
     private func loadSearchResults(query: String, isInitial: Bool = true) {
-        if isInitial { movies = [] }
+        if isInitial {
+            currentPage = 1
+            movies = []
+        }
         
         let request = SearchRequest(query: query, page: currentPage)
         networkManager.request(api: .search(request)) { (value: MovieResponse) in
@@ -71,21 +85,16 @@ final class MovieSearchViewController: BaseViewController {
         }
         recentSearches.insert(recentSearch)
         UserDefaultsManager.recentSearches = recentSearches
-        postRecentSearchNotification()
-    }
-    
-    private func postRecentSearchNotification() {
-        NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil)
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-        let movie = movies[sender.tag]
+        guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
+        
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.insert(movie)
-        } else {
-            UserDefaultsManager.user!.likedMovies.remove(movie)
+            UserDefaultsManager.user!.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
         }
-        NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
     }
 }
 
@@ -147,9 +156,9 @@ private extension MovieSearchViewController {
     
     struct Item: Hashable {
         let empty: String?
-        let movie: Movie?
+        let movie: MovieInfo?
         
-        private init(empty: String?, movie: Movie?) {
+        private init(empty: String?, movie: MovieInfo?) {
             self.empty = empty
             self.movie = movie
         }
@@ -158,7 +167,7 @@ private extension MovieSearchViewController {
             self.init(empty: empty, movie: nil)
         }
         
-        init(movie: Movie) {
+        init(movie: MovieInfo) {
             self.init(empty: nil, movie: movie)
         }
     }
@@ -170,10 +179,8 @@ private extension MovieSearchViewController {
         cell.configure(with: item)
     }
     
-    func searchResultCellRegistrationHandler(cell: MovieListCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        let isLiked = likedMovies.isSuperset(of: [item])
-        let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
-        cell.configure(with: todayMovie)
+    func searchResultCellRegistrationHandler(cell: MovieListCollectionViewCell, indexPath: IndexPath, item: MovieInfo) {
+        cell.configure(with: item)
         cell.likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
     }
     
@@ -185,14 +192,22 @@ private extension MovieSearchViewController {
             let items = [Item(empty: "원하는 검색결과를 찾지 못했습니다")]
             snapshot.appendItems(items, toSection: .empty)
         } else {
-            let items = movies.map{ Item(movie: $0) }
+            let items = movies.map{ movie in
+                let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+                let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+                return Item(movie: movieInfo)
+            }
             snapshot.appendItems(items, toSection: .searchResults)
         }
         dataSource.apply(snapshot)
     }
     
     func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
-        let items = newMovies.map{ Item(movie: $0) }
+        let items = newMovies.map{ movie in
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+            return Item(movie: movieInfo)
+        }
         guard let afterItem = snapshot.itemIdentifiers(inSection: .searchResults).last else { return }
         snapshot.insertItems(items, afterItem: afterItem)
         dataSource.apply(snapshot)
@@ -201,6 +216,20 @@ private extension MovieSearchViewController {
 
 //MARK: - CollectionView Delegate
 extension MovieSearchViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard indexPath.section == 1 else { return }
+        let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
+        movieDetailVC.likeButtonSelected = { (isLiked) in
+            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
+        navigationController?.pushViewController(movieDetailVC, animated: true)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let searchWord = searchBar.text,
               let totalPage else { return }
@@ -254,7 +283,8 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         view.endEditing(true)
-        guard let query = searchBar.text else { return }
+        guard let query = searchBar.text, currentSearchWord != query else { return }
+        currentSearchWord = query
         loadSearchResults(query: query)
         let recentSearch = RecentSearch(search: query, date: Date())
         updateRecentResults(recentSearch)
