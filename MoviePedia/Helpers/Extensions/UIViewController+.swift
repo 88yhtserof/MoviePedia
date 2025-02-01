@@ -20,4 +20,11 @@ extension UIViewController {
         }
         window.makeKeyAndVisible()
     }
+    
+    func showAlert(title: String, message: String, Style: UIAlertController.Style, actions: [UIAlertAction]) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: Style)
+        actions
+            .forEach{ alert.addAction($0) }
+        present(alert, animated: true)
+    }
 }
