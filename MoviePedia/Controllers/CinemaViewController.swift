@@ -45,6 +45,7 @@ final class CinemaViewController: BaseViewController {
         super.viewWillAppear(animated)
         
         if isUpdatingTodayMovieNeeded {
+            print("UOdate")
             createSnapshot()
             isUpdatingTodayMovieNeeded = false
         }
@@ -61,11 +62,15 @@ final class CinemaViewController: BaseViewController {
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
-        let movie = todayMovies[sender.tag]
+        guard let movie = todayMovies.first(where: { $0.id == sender.tag }) else {
+            print("Could not find movie")
+            return
+        }
+        
         if sender.isSelected {
             UserDefaultsManager.user!.likedMovies.insert(movie)
-        } else {
-            UserDefaultsManager.user!.likedMovies.remove(movie)
+        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
         }
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
@@ -243,7 +248,12 @@ private extension CinemaViewController {
     }
 }
 
-//MARK: - DataSource
+struct MovieInfo: Hashable {
+    let movie: Movie
+    var isLiked: Bool
+}
+
+//MARK: - CollectionView DataSource
 extension CinemaViewController {
     enum Section: Int, CaseIterable {
         case emptyRecentSearch
@@ -254,9 +264,9 @@ extension CinemaViewController {
     struct Item: Hashable {
         let empty: String?
         let recentSearch: Identifier<RecentSearch>?
-        let todayMovie: Movie?
+        let todayMovie: MovieInfo?
         
-        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: Movie?) {
+        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: MovieInfo?) {
             self.empty = empty
             self.recentSearch = recentSearch != nil ? Identifier(value: recentSearch!) : nil
             self.todayMovie = todayMovie
@@ -270,7 +280,7 @@ extension CinemaViewController {
             self.init(empty: nil, recentSearch: recentSearch, todayMovie: nil)
         }
         
-        init(todayMovie: Movie) {
+        init(todayMovie: MovieInfo) {
             self.init(empty: nil, recentSearch: nil, todayMovie: todayMovie)
         }
         
@@ -293,10 +303,9 @@ extension CinemaViewController {
         }
     }
     
-    func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        let isLiked = user.likedMovies.contains(where: { $0.id == item.id })
-        let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
-        cell.configure(with: todayMovie)
+    func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: MovieInfo) {
+        let movieInfo = MovieInfo(movie: item.movie, isLiked: item.isLiked)
+        cell.configure(with: movieInfo)
         cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     }
     
@@ -324,7 +333,12 @@ extension CinemaViewController {
             let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item(recentSearch: $0) }
             snapshot.appendItems(items, toSection: .recentSeach)
         }
-        let items = todayMovies.map{ Item(todayMovie: $0) }
+        
+        let items = todayMovies.map{ movie in
+            let isLiked = user.likedMovies.contains(where: { $0.id == movie.id })
+            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+            return Item(todayMovie: movieInfo)
+        }
         snapshot.appendItems(items, toSection: .todayMovie)
         
         dataSource.apply(snapshot)

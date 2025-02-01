@@ -35,13 +35,13 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
         likeButton.tag = 0
     }
     
-    func configure(with todayMovie: TodayMovie) {
-        titleLabel.text = todayMovie.movie.title
-        contentLabel.text = todayMovie.movie.overview
-        likeButton.isSelected = todayMovie.isLiked
-        likeButton.tag = todayMovie.index
+    func configure(with movieInfo: MovieInfo) {
+        titleLabel.text = movieInfo.movie.title
+        contentLabel.text = movieInfo.movie.overview
+        likeButton.isSelected = movieInfo.isLiked
+        likeButton.tag = movieInfo.movie.id
         
-        if let path = todayMovie.movie.poster_path,
+        if let path = movieInfo.movie.poster_path,
            let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             posterImageView.kf.setImage(with: imageURL)
         }

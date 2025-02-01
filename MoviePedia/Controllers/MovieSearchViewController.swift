@@ -18,7 +18,7 @@ final class MovieSearchViewController: BaseViewController {
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
-    private var likedMovies: Set<Movie> = UserDefaultsManager.user?.likedMovies ?? []
+    private var likedMovies: Set<Movie> { UserDefaultsManager.user?.likedMovies ?? [] }
     private var currentPage: Int = 1
     private var totalPage: Int?
     private var currentSearchWord: String?
@@ -83,11 +83,12 @@ final class MovieSearchViewController: BaseViewController {
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-        let movie = movies[sender.tag]
+        guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
+        
         if sender.isSelected {
             UserDefaultsManager.user!.likedMovies.insert(movie)
-        } else {
-            UserDefaultsManager.user!.likedMovies.remove(movie)
+        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
         }
         NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
     }
@@ -151,9 +152,9 @@ private extension MovieSearchViewController {
     
     struct Item: Hashable {
         let empty: String?
-        let movie: Movie?
+        let movie: MovieInfo?
         
-        private init(empty: String?, movie: Movie?) {
+        private init(empty: String?, movie: MovieInfo?) {
             self.empty = empty
             self.movie = movie
         }
@@ -162,7 +163,7 @@ private extension MovieSearchViewController {
             self.init(empty: empty, movie: nil)
         }
         
-        init(movie: Movie) {
+        init(movie: MovieInfo) {
             self.init(empty: nil, movie: movie)
         }
     }
@@ -174,10 +175,8 @@ private extension MovieSearchViewController {
         cell.configure(with: item)
     }
     
-    func searchResultCellRegistrationHandler(cell: MovieListCollectionViewCell, indexPath: IndexPath, item: Movie) {
-        let isLiked = likedMovies.isSuperset(of: [item])
-        let todayMovie = TodayMovie(movie: item, isLiked: isLiked, index: indexPath.item)
-        cell.configure(with: todayMovie)
+    func searchResultCellRegistrationHandler(cell: MovieListCollectionViewCell, indexPath: IndexPath, item: MovieInfo) {
+        cell.configure(with: item)
         cell.likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
     }
     
@@ -189,14 +188,22 @@ private extension MovieSearchViewController {
             let items = [Item(empty: "원하는 검색결과를 찾지 못했습니다")]
             snapshot.appendItems(items, toSection: .empty)
         } else {
-            let items = movies.map{ Item(movie: $0) }
+            let items = movies.map{ movie in
+                let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+                let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+                return Item(movie: movieInfo)
+            }
             snapshot.appendItems(items, toSection: .searchResults)
         }
         dataSource.apply(snapshot)
     }
     
     func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
-        let items = newMovies.map{ Item(movie: $0) }
+        let items = newMovies.map{ movie in
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+            return Item(movie: movieInfo)
+        }
         guard let afterItem = snapshot.itemIdentifiers(inSection: .searchResults).last else { return }
         snapshot.insertItems(items, afterItem: afterItem)
         dataSource.apply(snapshot)

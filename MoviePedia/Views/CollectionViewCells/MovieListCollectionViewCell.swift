@@ -41,17 +41,17 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
         likeButton.tag = 0
     }
     
-    func configure(with todayMovie: TodayMovie) {
+    func configure(with movieInfo: MovieInfo) {
         
-        if let title = todayMovie.movie.title {
+        if let title = movieInfo.movie.title {
             titleLabel.text = title
         }
         
-        if let release_date = todayMovie.movie.release_date {
+        if let release_date = movieInfo.movie.release_date {
             dateLabel.text = DateFormatterManager.shared.string(from: release_date, from: .originalMovieReleaseDate, to: .movieReleaseDate)
         }
         
-        if let genre_ids = todayMovie.movie.genre_ids {
+        if let genre_ids = movieInfo.movie.genre_ids {
             genre_ids
                 .prefix(2)
                 .compactMap{ Genre(rawValue: $0) }
@@ -61,13 +61,13 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
                 }
         }
         
-        if let path = todayMovie.movie.poster_path,
+        if let path = movieInfo.movie.poster_path,
            let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             posterImageView.kf.setImage(with: imageURL)
         }
         
-        likeButton.isSelected = todayMovie.isLiked
-        likeButton.tag = todayMovie.index
+        likeButton.isSelected = movieInfo.isLiked
+        likeButton.tag = movieInfo.movie.id
     }
     
 }
