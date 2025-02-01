@@ -34,10 +34,12 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     private let nicknameValidator = NicknameValidator()
     private var nickname: String?
+    private var isEditedMode: Bool
     
     var saveProfileHandler: ((User) -> Void)?
     
-    init(user: User? = nil) {
+    init(user: User? = nil, isEditedMode: Bool = false) {
+        self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)
         configureInitialData(user)
     }
@@ -78,10 +80,18 @@ final class ProfileNicknameEditViewController: BaseViewController {
         do {
             nickname = try nicknameValidator.validateNickname(of: text)
             nicknameTextField.statusText = LiteralText.statusText.text
-            doneButton.isUserInteractionEnabled = true
+            if isEditedMode {
+                navigationItem.rightBarButtonItem?.isEnabled = true
+            } else {
+                doneButton.isUserInteractionEnabled = true
+            }
         } catch let error as NicknameValidator.ValidationError {
             nicknameTextField.statusText = error.description
-            doneButton.isUserInteractionEnabled = false
+            if isEditedMode {
+                navigationItem.rightBarButtonItem?.isEnabled = false
+            } else {
+                doneButton.isUserInteractionEnabled = false
+            }
         } catch {
             print("Unexpected error: \(error)")
         }

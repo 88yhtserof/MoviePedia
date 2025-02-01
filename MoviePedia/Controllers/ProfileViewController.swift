@@ -31,7 +31,7 @@ class ProfileViewController: BaseViewController {
     }
     
     @objc func presentProfileEditVC() {
-        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user)
+        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
         let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
         if let sheet = profileNicknameEditNC.sheetPresentationController {
             sheet.detents = [.large()]
