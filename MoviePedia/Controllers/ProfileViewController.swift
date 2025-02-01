@@ -112,7 +112,9 @@ extension ProfileViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.item == 3 {
             let okAction = UIAlertAction(title: "확인", style: .default) { _ in
-                print("Switch start page")
+                UserDefaultsManager.reset()
+                let onboardingVC = OnboardingViewController()
+                self.switchRootViewController(rootViewController: onboardingVC, isNavigationEmbeded: true)
             }
             let cancelAction = UIAlertAction(title: "취소", style: .cancel)
             showAlert(title: "탈퇴하기", message: "탈퇴를 하면 데이터가 모두 초기화됩니다.\n탈퇴 하시겠습니까?", Style: .alert, actions: [cancelAction, okAction])

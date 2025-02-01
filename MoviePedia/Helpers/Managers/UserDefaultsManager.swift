@@ -9,7 +9,7 @@ import Foundation
 
 enum UserDefaultsManager {
     
-    private enum Key: String {
+    private enum Key: String, CaseIterable {
         case user
         case isOnboardingNotNeeded
         case likedMovies
@@ -18,6 +18,13 @@ enum UserDefaultsManager {
         var defaultName: String {
             return rawValue
         }
+    }
+    
+    static func reset() {
+        Key.allCases
+            .forEach {
+                UserDefaults.standard.removeObject(forKey: $0.defaultName)
+            }
     }
     
     // TODO: - 추상화
