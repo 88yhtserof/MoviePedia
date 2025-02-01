@@ -12,6 +12,7 @@ enum TMDBNetworkAPI {
     case treding(TrendingRequest)
     case search(SearchRequest)
     case image(ImageRequest)
+    case credit(CreditRequest)
     
     static let authorizationKey = AuthorizationKeyManager.tmdb.apiKey ?? ""
     static let imageBaseURL = "https://image.tmdb.org/t/p/w500"
@@ -29,6 +30,8 @@ enum TMDBNetworkAPI {
             path = "search/movie"
         case .image(let request):
             path = "movie/\(request.movieID)/images"
+        case .credit(let request):
+            path = "movie/\(request.movieID)/credits"
         }
         return URL(string: baseURL + path)
     }
@@ -39,7 +42,7 @@ enum TMDBNetworkAPI {
     
     var method: HTTPMethod {
         switch self {
-        case .treding, .search, .image:
+        case .treding, .search, .image, .credit:
             return .get
         }
     }
@@ -52,6 +55,8 @@ enum TMDBNetworkAPI {
             return request.parameters
         case .image:
             return [:]
+        case .credit(let request):
+            return request.parameters
         }
     }
 }

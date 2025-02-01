@@ -13,7 +13,7 @@ import SnapKit
 
 final class MovieDetailViewController: BaseViewController {
     
-    let cast = [Cast(name: "김다미", character: "Koo Ja-yoon", profile_path: "/nRGhwfuWqcTMoTmnhK4XmcRkZ6B.jpg"), Cast(name: "조민수", character: "Dr. Baek", profile_path: "/1dC0ZRTWlvFEcDk4O6peI97zsVM.jpg"), Cast(name:  "박희순", character: "Mr. Choi", profile_path: "/s2SSzvlsSfCPP5EXhCoWUr8970F.jpg"), Cast(name: "고민시", character: "Do Myeong-hee", profile_path: "/w6GAqYilB3ej5Had7rfc6grLHPB.jpg"), Cast(name: "최정우", character: "Koo Seong-hwan", profile_path: "/doHUwUDRML1uo0PVVRXblGAJhN3.jpg"), Cast(name: "오미희", character: "Koo's wife", profile_path: "/js6ztmJnh3hlLEDm9nX6P3b1zbO.jpg"), Cast(name: "정다은", character: "Long Hair", profile_path: "/yAqywl2JDji5H9lxpdmOFIVvQTY.jpg")]
+    let cast = [Credit(name: "김다미", character: "Koo Ja-yoon", profile_path: "/nRGhwfuWqcTMoTmnhK4XmcRkZ6B.jpg"), Credit(name: "조민수", character: "Dr. Baek", profile_path: "/1dC0ZRTWlvFEcDk4O6peI97zsVM.jpg"), Credit(name:  "박희순", character: "Mr. Choi", profile_path: "/s2SSzvlsSfCPP5EXhCoWUr8970F.jpg"), Credit(name: "고민시", character: "Do Myeong-hee", profile_path: "/w6GAqYilB3ej5Had7rfc6grLHPB.jpg"), Credit(name: "최정우", character: "Koo Seong-hwan", profile_path: "/doHUwUDRML1uo0PVVRXblGAJhN3.jpg"), Credit(name: "오미희", character: "Koo's wife", profile_path: "/js6ztmJnh3hlLEDm9nX6P3b1zbO.jpg"), Credit(name: "정다은", character: "Long Hair", profile_path: "/yAqywl2JDji5H9lxpdmOFIVvQTY.jpg")]
     
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
@@ -143,10 +143,10 @@ private extension MovieDetailViewController {
     struct Item: Hashable {
         let backdrop: Identifier<Image>?
         let synopsis: String?
-        let cast: Cast?
+        let cast: Credit?
         let poster: Identifier<Image>?
         
-        private init(backdrop: Image?, synopsis: String?, cast: Cast?, poster: Image?) {
+        private init(backdrop: Image?, synopsis: String?, cast: Credit?, poster: Image?) {
             self.backdrop = backdrop != nil ? Identifier(value: backdrop!) : nil
             self.synopsis = synopsis
             self.cast = cast
@@ -161,7 +161,7 @@ private extension MovieDetailViewController {
             self.init(backdrop: nil, synopsis: synopsis, cast: nil, poster: nil)
         }
         
-        init(cast: Cast) {
+        init(cast: Credit) {
             self.init(backdrop: nil, synopsis: nil, cast: cast, poster: nil)
         }
         
@@ -185,7 +185,7 @@ private extension MovieDetailViewController {
         cell.numberOfLines = 3
     }
     
-    func castCellRegistrationHandler(cell: CastCollectionViewCell, indexPath: IndexPath, item: Cast) {
+    func castCellRegistrationHandler(cell: CastCollectionViewCell, indexPath: IndexPath, item: Credit) {
         cell.configure(with: item)
     }
     

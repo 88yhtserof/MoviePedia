@@ -58,7 +58,7 @@ final class CastCollectionViewCell: UICollectionViewCell {
         castImageView.image = UIImage(systemName: "photo")
     }
     
-    func configure(with cast: Cast) {
+    func configure(with cast: Credit) {
         if let path = cast.profile_path,
            let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             castImageView.kf.setImage(with: imageURL)

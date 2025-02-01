@@ -9,5 +9,5 @@ import Foundation
 
 struct CreditResponse: Codable {
     let id: Int
-    let cast: [Cast]?
+    let cast: [Credit]?
 }
