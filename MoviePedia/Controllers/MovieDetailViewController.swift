@@ -13,26 +13,17 @@ import SnapKit
 
 final class MovieDetailViewController: BaseViewController {
     
-    let imageList = [
-        "/f3dmjpDiOmy047WsQMY03pnNMu1.jpg",
-        "/y9HpPnZUkygFishCcYDOpzHgdD5.jpg",
-        "/faawswmpK7mGhPtiVjdPWVJ6Vld.jpg"
-    ]
-    
-    let posterList = [
-        "/1hEC2ld1nLS6i8ump3ecPHqZ3OR.png",
-        "/hwmCH4LefEnjoeUYMKd0zhhjUcW.png",
-        "/888Fm41DNgQ4PtNECv1IEKsJXjk.png"
-    ]
-    
     let cast = [Cast(name: "김다미", character: "Koo Ja-yoon", profile_path: "/nRGhwfuWqcTMoTmnhK4XmcRkZ6B.jpg"), Cast(name: "조민수", character: "Dr. Baek", profile_path: "/1dC0ZRTWlvFEcDk4O6peI97zsVM.jpg"), Cast(name:  "박희순", character: "Mr. Choi", profile_path: "/s2SSzvlsSfCPP5EXhCoWUr8970F.jpg"), Cast(name: "고민시", character: "Do Myeong-hee", profile_path: "/w6GAqYilB3ej5Had7rfc6grLHPB.jpg"), Cast(name: "최정우", character: "Koo Seong-hwan", profile_path: "/doHUwUDRML1uo0PVVRXblGAJhN3.jpg"), Cast(name: "오미희", character: "Koo's wife", profile_path: "/js6ztmJnh3hlLEDm9nX6P3b1zbO.jpg"), Cast(name: "정다은", character: "Long Hair", profile_path: "/yAqywl2JDji5H9lxpdmOFIVvQTY.jpg")]
     
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
+    private let networkManager = TMDBNetworkManager.shared
     
     private let movie: Movie
+    private var backdrops: [Image] = []
+    private var posters: [Image] = []
     
     init(movie: Movie) {
         self.movie = movie
@@ -50,6 +41,18 @@ final class MovieDetailViewController: BaseViewController {
         configureHierarachy()
         configureConstraints()
         configureCollectionViewDataSource()
+        loadMovieImage()
+    }
+    
+    private func loadMovieImage() {
+        let request = ImageRequest(movieID: movie.id)
+        networkManager.request(api: .image(request)) { [self] (image: ImageResponse) in
+            self.backdrops = image.backdrops ?? []
+            self.posters = image.posters ?? []
+            self.createSnapshot()
+        } failureHandler: { error in
+            print(error)
+        }
     }
 }
 
@@ -90,7 +93,7 @@ private extension MovieDetailViewController {
             case .cast:
                 cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast)
             case .poster:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.poster)
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.poster?.value)
             }
             
             return cell
@@ -138,19 +141,19 @@ private extension MovieDetailViewController {
     }
     
     struct Item: Hashable {
-        let backdrop: String?
+        let backdrop: Image?
         let synopsis: String?
         let cast: Cast?
-        let poster: String?
+        let poster: Identifier<Image>?
         
-        private init(backdrop: String?, synopsis: String?, cast: Cast?, poster: String?) {
+        private init(backdrop: Image?, synopsis: String?, cast: Cast?, poster: Image?) {
             self.backdrop = backdrop
             self.synopsis = synopsis
             self.cast = cast
-            self.poster = poster
+            self.poster = poster != nil ? Identifier(value: poster!) : nil
         }
         
-        init(backdrop: String) {
+        init(backdrop: Image) {
             self.init(backdrop: backdrop, synopsis: nil, cast: nil, poster: nil)
         }
         
@@ -162,7 +165,7 @@ private extension MovieDetailViewController {
             self.init(backdrop: nil, synopsis: nil, cast: cast, poster: nil)
         }
         
-        init(poster: String) {
+        init(poster: Image) {
             self.init(backdrop: nil, synopsis: nil, cast: nil, poster: poster)
         }
     }
@@ -170,9 +173,9 @@ private extension MovieDetailViewController {
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
-    func backdropCellRegistrationHandler(cell: ImageCollectionCell, indexPath: IndexPath, item: String) {
-        let path = imageList[indexPath.item]
-        if let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
+    func backdropCellRegistrationHandler(cell: ImageCollectionCell, indexPath: IndexPath, item: Image) {
+        if let path = item.file_path,
+           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
             cell.imageView.kf.setImage(with: imageURL)
         }
     }
@@ -234,10 +237,10 @@ private extension MovieDetailViewController {
     }
     
     func createSnapshot() {
-        let backdropItems = imageList.map{ Item(backdrop: $0) }
+        let backdropItems = backdrops.prefix(5).map{ Item(backdrop: $0) }
         let synopsysItems = [Item(synopsis: movie.overview ?? "")]
         let castItems = cast.map{ Item(cast: $0) }
-        let posterItems: [Item] = posterList.map{ Item(poster: $0) }
+        let posterItems: [Item] = posters.map{ Item(poster: $0) }
         
         snapshot = Snapshot()
         snapshot.appendSections([.backdrop, .synopsys, .cast, .poster])
@@ -257,6 +260,10 @@ extension MovieDetailViewController: UICollectionViewDelegate {
             let supplementaryView = collectionView.supplementaryView(forElementKind: "layout-footer-element-kind", at: indexPathForBackdrop)
                         
             guard let movieInfoView = supplementaryView as? MovieDetailInfoSupplementaryView else { return }
+            if movieInfoView.pageControl.currentPage != 5
+               || movieInfoView.pageControl.currentPage != backdrops.count {
+                movieInfoView.pageControl.currentPage = backdrops.count
+            }
             movieInfoView.pageControl.currentPage = indexPath.item
         }
     }

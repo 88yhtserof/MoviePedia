@@ -41,7 +41,7 @@ private extension MovieDetailInfoSupplementaryView {
         
         pageControl.backgroundColor = .moviepedia_background.withAlphaComponent(0.3)
         pageControl.cornerRadius(13)
-        pageControl.numberOfPages = 3
+        pageControl.numberOfPages = 5
         pageControl.currentPage = 0
         
         releaseDateLabel.image = UIImage(systemName: "calendar")
