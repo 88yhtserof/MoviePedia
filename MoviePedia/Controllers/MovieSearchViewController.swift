@@ -26,13 +26,8 @@ final class MovieSearchViewController: BaseViewController {
     private var isUpdatingTodayMovieNeeded: Bool = false
     
     init(searchWord: String? = nil) {
+        recenteSearchedWord = searchWord
         super.init(nibName: nil, bundle: nil)
-        if let searchWord {
-            searchBar.text = searchWord
-            loadSearchResults(query: searchWord)
-        } else {
-            searchBar.becomeFirstResponder()
-        }
     }
     
     required init?(coder: NSCoder) {
@@ -47,14 +42,19 @@ final class MovieSearchViewController: BaseViewController {
         configureConstraints()
         configureNotificationObserver()
         configureCollectionViewDataSource()
+        
+        if let recenteSearchedWord {
+            searchBar.text = recenteSearchedWord
+            loadSearchResults(query: recenteSearchedWord)
+        }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        if isUpdatingTodayMovieNeeded {
-            createSnapshot()
-            isUpdatingTodayMovieNeeded = false
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if recenteSearchedWord == nil && (searchBar.text?.isEmpty ?? true) {
+            DispatchQueue.main.async() {
+                self.searchBar.becomeFirstResponder()
+            }
         }
     }
     
