@@ -30,6 +30,11 @@ class ProfileViewController: BaseViewController {
         configureCollectionViewDataSource()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        profileInfoView.user = user
+    }
+    
     @objc func presentProfileEditVC() {
         let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
         let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)

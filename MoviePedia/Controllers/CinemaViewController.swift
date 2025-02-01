@@ -42,6 +42,7 @@ final class CinemaViewController: BaseViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        profileInfoView.user = user
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
         createSnapshot()
     }
