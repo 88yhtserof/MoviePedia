@@ -236,10 +236,6 @@ private extension CinemaViewController {
     }
 }
 
-struct MovieInfo: Hashable {
-    let movie: Movie
-    var isLiked: Bool
-}
 
 //MARK: - CollectionView DataSource
 extension CinemaViewController {
