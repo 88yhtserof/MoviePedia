@@ -99,6 +99,15 @@ final class CinemaViewController: BaseViewController {
     
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
         let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
+        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
+            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
+            let indexPath = IndexPath(item: movieIndex, section: 2)
+            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }

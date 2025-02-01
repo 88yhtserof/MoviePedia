@@ -24,6 +24,8 @@ final class MovieSearchViewController: BaseViewController {
     private var currentSearchWord: String?
     private let recenteSearchedWord: String?
     
+    var likeButtonSelected: ((Bool, Int) -> Void)?
+    
     init(searchWord: String? = nil) {
         recenteSearchedWord = searchWord
         super.init(nibName: nil, bundle: nil)
@@ -95,6 +97,7 @@ final class MovieSearchViewController: BaseViewController {
         } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
             UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
+        likeButtonSelected?(sender.isSelected, movie.id)
     }
 }
 
