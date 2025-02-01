@@ -13,6 +13,7 @@ import SnapKit
 
 final class MovieDetailViewController: BaseViewController {
     
+    private let likeButton = LikeSelectedButton()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!
@@ -86,6 +87,7 @@ final class MovieDetailViewController: BaseViewController {
 private extension MovieDetailViewController {
     func configureViews() {
         navigationItem.title = movie.title
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: likeButton)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.delegate = self
