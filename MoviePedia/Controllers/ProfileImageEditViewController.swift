@@ -18,9 +18,11 @@ final class ProfileImageEditViewController: BaseViewController {
     private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
     private var selectedImageNumber: Int
     var selectedImageHandler: ((Int) -> Void)?
+    private var isEditedMode: Bool
     
-    init(profileImageNumber: Int) {
+    init(profileImageNumber: Int, isEditedMode: Bool = false) {
         self.selectedImageNumber = profileImageNumber
+        self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -42,6 +44,8 @@ final class ProfileImageEditViewController: BaseViewController {
 //MARK: - Configuration
 private extension ProfileImageEditViewController {
     func configureViews() {
+        navigationItem.title = isEditedMode ? "프로필 이미지 편집" : "프로필 이미지 설정"
+        
         backBarButtonItemAction = { [weak self] in
             guard let self else { return }
             self.selectedImageHandler?(self.selectedImageNumber)

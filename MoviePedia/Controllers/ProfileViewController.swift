@@ -29,12 +29,27 @@ class ProfileViewController: BaseViewController {
         configureConstraints()
         configureCollectionViewDataSource()
     }
+    
+    @objc func presentProfileEditVC() {
+        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user)
+        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
+        if let sheet = profileNicknameEditNC.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+        }
+        profileNicknameEditVC.saveProfileHandler = { user in
+            self.profileInfoView.user = user
+        }
+        present(profileNicknameEditNC, animated: true)
+    }
 }
 
 //MARK: - Configuration
 private extension ProfileViewController {
     func configureViews() {
         navigationItem.title = "설정"
+        
+        profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.alwaysBounceVertical = false
         collectionView.delegate = self
