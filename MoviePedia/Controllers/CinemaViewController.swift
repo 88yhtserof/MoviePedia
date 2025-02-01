@@ -112,7 +112,7 @@ private extension CinemaViewController {
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
-        profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
+        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.isScrollEnabled = false

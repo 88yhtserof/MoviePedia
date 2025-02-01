@@ -12,9 +12,9 @@ class ProfileInfoView: UIView {
     
     private let backgroundView = UIView()
     private let profileImageControl = ProfileImageControl(style: .selected)
-    let userInfoButton = UIButton()
+    private let userInfoButton = UIButton()
     private let chevronButton = UIButton()
-    private lazy var profileStackView = UIStackView(arrangedSubviews: [profileImageControl, userInfoButton])
+    let profileControlView = UIControl()
     private let movieBoxButton = UIButton()
     
     var user: User {
@@ -69,14 +69,11 @@ private extension ProfileInfoView {
         config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
         config.attributedSubtitle = AttributedString(dateStr, attributes: attributedSubtitleContainer)
         userInfoButton.configuration = config
+        userInfoButton.isUserInteractionEnabled = false
         
         let image = UIImage(systemName: "chevron.right")
         chevronButton.setImage(image, for: .normal)
         chevronButton.tintColor = .moviepedia_tagbackground
-        
-        profileStackView.axis = .horizontal
-        profileStackView.distribution = .fill
-        profileStackView.alignment = .center
         
         var movieBoxConfig = UIButton.Configuration.filled()
         movieBoxConfig.title = String(format: "%d개인 무비박스 보관 중", likedMoviesCount)
@@ -88,7 +85,8 @@ private extension ProfileInfoView {
     
     func configureHierarchy() {
         addSubviews(backgroundView)
-        backgroundView.addSubviews(profileStackView, chevronButton, movieBoxButton)
+        backgroundView.addSubviews(profileControlView, chevronButton, movieBoxButton)
+        profileControlView.addSubviews(profileImageControl, userInfoButton)
     }
     
     func configureConstraints() {
@@ -101,21 +99,28 @@ private extension ProfileInfoView {
         
         profileImageControl.snp.makeConstraints { make in
             make.width.height.equalTo(60)
+            make.verticalEdges.leading.equalToSuperview()
         }
         
-        profileStackView.snp.makeConstraints { make in
+        userInfoButton.snp.makeConstraints { make in
+            make.leading.equalTo(profileImageControl.snp.trailing).offset(8)
+            make.centerY.equalTo(profileImageControl)
+        }
+        
+        profileControlView.snp.makeConstraints { make in
             make.top.equalToSuperview().inset(verticalInset)
             make.leading.equalToSuperview().inset(horizontalInnset)
+            make.trailing.equalTo(movieBoxButton)
         }
         
         chevronButton.snp.makeConstraints { make in
-            make.centerY.equalTo(profileStackView)
+            make.centerY.equalTo(profileControlView)
             make.trailing.equalToSuperview().inset(horizontalInnset)
         }
         
         movieBoxButton.snp.makeConstraints { make in
             make.height.equalTo(40)
-            make.top.equalTo(profileStackView.snp.bottom).offset(verticalInset)
+            make.top.equalTo(profileControlView.snp.bottom).offset(verticalInset)
             make.horizontalEdges.equalToSuperview().inset(horizontalInnset)
             make.bottom.equalToSuperview().inset(verticalInset)
         }

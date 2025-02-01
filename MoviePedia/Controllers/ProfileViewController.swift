@@ -49,7 +49,7 @@ private extension ProfileViewController {
     func configureViews() {
         navigationItem.title = "설정"
         
-        profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
+        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.alwaysBounceVertical = false
         collectionView.delegate = self
