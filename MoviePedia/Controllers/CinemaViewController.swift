@@ -47,8 +47,16 @@ final class CinemaViewController: BaseViewController {
     }
     
     @objc func presentProfileEditVC() {
-        let profileNicknameEditVC = ProfileNicknameEditViewController()
-        present(profileNicknameEditVC, animated: true)
+        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user)
+        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
+        if let sheet = profileNicknameEditNC.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+        }
+        profileNicknameEditVC.saveProfileHandler = { user in
+            self.profileInfoView.user = user
+        }
+        present(profileNicknameEditNC, animated: true)
     }
     
     @objc func removeAllRecentSearches() {

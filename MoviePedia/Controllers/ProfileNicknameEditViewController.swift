@@ -35,12 +35,33 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let nicknameValidator = NicknameValidator()
     private var nickname: String?
     
+    var saveProfileHandler: ((User) -> Void)?
+    
+    init(user: User? = nil) {
+        super.init(nibName: nil, bundle: nil)
+        configureInitialData(user)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureViews()
         configureHierarchy()
         configureConstraints()
+    }
+    
+    @objc func dismissBarButtonItemTapped() {
+        dismiss(animated: true)
+    }
+    
+    @objc func saveBarButtonItemTapped() {
+        guard let user = saveProfileData() else { return }
+        saveProfileHandler?(user)
+        dismiss(animated: true)
     }
     
     @objc func profileImageControlDidTapped() {
@@ -67,14 +88,20 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func doneButtonDidTapped() {
-        guard let nickname else { return }
-        let profileImageName = String(format: "profile_%d", profileImageNumber)
-        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
-        UserDefaultsManager.user = user
+        saveProfileData()
         UserDefaultsManager.isOnboardingNotNeeded = true
         
         let mainVC = MainTabBarViewController()
         switchRootViewController(rootViewController: mainVC)
+    }
+    
+    @discardableResult
+    private func saveProfileData() -> User? {
+        guard let nickname else { return nil }
+        let profileImageName = String(format: "profile_%d", profileImageNumber)
+        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
+        UserDefaultsManager.user = user
+        return user
     }
 }
 
@@ -83,6 +110,29 @@ final class ProfileNicknameEditViewController: BaseViewController {
 
 //MARK: - Configuration
 private extension ProfileNicknameEditViewController {
+    
+    private func configureInitialData(_ user: User?) {
+        guard let user else {
+            navigationItem.title = "프로필 설정"
+            return
+        }
+        
+        navigationItem.title = "프로필 편집"
+        let dismissBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(dismissBarButtonItemTapped))
+        let saveBarButtonItem = UIBarButtonItem(title: "저장", image: nil, target: self, action: #selector(saveBarButtonItemTapped))
+        
+        navigationItem.leftBarButtonItem = dismissBarButtonItem
+        navigationItem.rightBarButtonItem = saveBarButtonItem
+        doneButton.isHidden = true
+        nicknameTextField.textField.text = user.nickname
+        nickname = user.nickname
+        
+        if let image = user.profileImage.components(separatedBy: "_").last,
+           let number = Int(image) {
+            profileImageNumber = number
+        }
+    }
+    
     func configureViews() {
         let image = UIImage(named: String(format: "profile_%d", profileImageNumber))
         profileImageControl.image = image

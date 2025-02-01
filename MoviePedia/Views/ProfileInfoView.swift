@@ -17,7 +17,12 @@ class ProfileInfoView: UIView {
     private lazy var profileStackView = UIStackView(arrangedSubviews: [profileImageControl, userInfoButton])
     private let movieBoxButton = UIButton()
     
-    private let user: User
+    var user: User {
+        didSet {
+            profileImageControl.image = UIImage(named: user.profileImage)
+            updateUserNickname()
+        }
+    }
     private let likedMoviesCount: Int
     
     init(user: User, likedMoviesCount: Int) {
@@ -39,6 +44,13 @@ class ProfileInfoView: UIView {
         config?.title = String(format: "%d개인 무비박스 보관 중", count)
         movieBoxButton.configuration = config
     }
+    
+    func updateUserNickname() {
+        var config = userInfoButton.configuration!
+        let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
+        config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
+        userInfoButton.configuration = config
+    }
 }
 
 //MARK: - Configuration
@@ -48,6 +60,7 @@ private extension ProfileInfoView {
         backgroundView.backgroundColor = .moviepedia_subbackground
         
         profileImageControl.image = UIImage(named: user.profileImage)
+        profileImageControl.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
         let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
@@ -76,7 +89,6 @@ private extension ProfileInfoView {
     func configureHierarchy() {
         addSubviews(backgroundView)
         backgroundView.addSubviews(profileStackView, chevronButton, movieBoxButton)
-        
     }
     
     func configureConstraints() {
