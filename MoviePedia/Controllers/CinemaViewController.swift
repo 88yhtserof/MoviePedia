@@ -157,7 +157,7 @@ private extension CinemaViewController {
             case .emptyRecentSearch:
                 cell = collectionView.dequeueConfiguredReusableCell(using: emptyRecentSearchCellRegistration, for: indexPath, item: itemIdentifier.empty)
             case .recentSeach:
-                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: itemIdentifier.recentSearch)
+                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: itemIdentifier.recentSearch?.value)
             case .todayMovie:
                 cell  = collectionView.dequeueConfiguredReusableCell(using: todayMovieCellRegidtration, for: indexPath, item: itemIdentifier.todayMovie)
             }
@@ -253,12 +253,12 @@ extension CinemaViewController {
     
     struct Item: Hashable {
         let empty: String?
-        let recentSearch: RecentSearch?
+        let recentSearch: Identifier<RecentSearch>?
         let todayMovie: Movie?
         
         private init(empty: String?, recentSearch: RecentSearch?, todayMovie: Movie?) {
             self.empty = empty
-            self.recentSearch = recentSearch
+            self.recentSearch = recentSearch != nil ? Identifier(value: recentSearch!) : nil
             self.todayMovie = todayMovie
         }
         
