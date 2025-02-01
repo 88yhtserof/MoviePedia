@@ -12,6 +12,7 @@ enum UserDefaultsManager {
     private enum Key: String {
         case user
         case isOnboardingNotNeeded
+        case likedMovies
         case recentSearches
         
         var defaultName: String {
@@ -42,6 +43,22 @@ enum UserDefaultsManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Key.isOnboardingNotNeeded.defaultName)
+        }
+    }
+    
+    static var likedMovies: [Movie] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: Key.likedMovies.defaultName),
+                  let decoded = try? JSONDecoder().decode([Movie].self, from: data) else { return [] }
+            return decoded
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                UserDefaults.standard.set(data, forKey: Key.likedMovies.defaultName)
+            } catch {
+                print("ERROR:", error)
+            }
         }
     }
     

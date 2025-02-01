@@ -18,9 +18,11 @@ class ProfileInfoView: UIView {
     private let movieBoxButton = UIButton()
     
     private let user: User
+    private let likedMoviesCount: Int
     
-    init(user: User) {
+    init(user: User, likedMoviesCount: Int) {
         self.user = user
+        self.likedMoviesCount = likedMoviesCount
         super.init(frame: .zero)
         
         configureViews()
@@ -64,7 +66,7 @@ private extension ProfileInfoView {
         profileStackView.alignment = .center
         
         var movieBoxConfig = UIButton.Configuration.filled()
-        movieBoxConfig.title = String(format: "%d개인 무비박스 보관 중", user.likedMovies.count)
+        movieBoxConfig.title = String(format: "%d개인 무비박스 보관 중", likedMoviesCount)
         movieBoxConfig.baseForegroundColor = .moviepedia_foreground
         movieBoxConfig.baseBackgroundColor = .moviepedia_point
         movieBoxConfig.background.cornerRadius = 10

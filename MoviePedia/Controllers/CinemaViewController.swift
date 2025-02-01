@@ -10,7 +10,7 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(user: user)
+    private lazy var profileInfoView = ProfileInfoView(user: user, likedMoviesCount: likedMovies.count)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let searchBarButtonItem = UIBarButtonItem()
     
@@ -18,7 +18,7 @@ final class CinemaViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private var user: User { UserDefaultsManager.user! }
-    private var likedMovies: [Movie] { UserDefaultsManager.user!.likedMovies }
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     private var recentSearches: Set<RecentSearch> {
         get {
             UserDefaultsManager.recentSearches
@@ -63,9 +63,9 @@ final class CinemaViewController: BaseViewController {
         }
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
@@ -315,7 +315,7 @@ extension CinemaViewController {
         }
         
         let items = todayMovies.map{ movie in
-            let isLiked = user.likedMovies.contains(where: { $0.id == movie.id })
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
             let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
             return Item(todayMovie: movieInfo)
         }

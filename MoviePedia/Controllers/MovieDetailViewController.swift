@@ -20,7 +20,7 @@ final class MovieDetailViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private let networkManager = TMDBNetworkManager.shared
-    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     
     private let movie: Movie
     private var backdrops: [Image] = []
@@ -90,9 +90,9 @@ final class MovieDetailViewController: BaseViewController {
         likeButtonSelected?(sender.isSelected)
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
     }
 }
