@@ -14,6 +14,7 @@ class ImageCollectionCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
+        imageView.tintColor = .moviepedia_tagbackground
         imageView.image = UIImage(systemName: "photo")
         imageView.backgroundColor = .moviepedia_subbackground
         imageView.contentMode = .scaleAspectFill

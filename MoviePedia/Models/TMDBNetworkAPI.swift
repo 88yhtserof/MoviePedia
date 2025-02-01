@@ -8,6 +8,8 @@
 import Foundation
 import Alamofire
 
+
+
 enum TMDBNetworkAPI {
     case treding(TrendingRequest)
     case search(SearchRequest)
@@ -15,7 +17,6 @@ enum TMDBNetworkAPI {
     case credit(CreditRequest)
     
     static let authorizationKey = AuthorizationKeyManager.tmdb.apiKey ?? ""
-    static let imageBaseURL = "https://image.tmdb.org/t/p/w500"
     
     var baseURL: String {
         return "https://api.themoviedb.org/3/"

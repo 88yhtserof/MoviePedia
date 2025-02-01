@@ -7,9 +7,7 @@
 
 import UIKit
 import SnapKit
-
-
-
+import Kingfisher
 
 final class MovieDetailViewController: BaseViewController {
     
@@ -221,8 +219,10 @@ private extension MovieDetailViewController {
     
     func backdropCellRegistrationHandler(cell: ImageCollectionCell, indexPath: IndexPath, item: Image) {
         if let path = item.file_path,
-           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
-            cell.imageView.kf.setImage(with: imageURL)
+           let imageURL = URL(string: ImageNetworkAPI.original.endPoint + path) {
+            cell.imageView.kf.indicatorType = .activity
+            cell.imageView.kf.setImage(with: imageURL,
+                                       options: [.transition(.fade(1.2))])
         }
     }
     
