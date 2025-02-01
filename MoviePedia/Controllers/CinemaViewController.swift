@@ -346,14 +346,16 @@ extension CinemaViewController {
 //MARK: - CollectionView Delegate
 extension CinemaViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
-        movieDetailVC.likeButtonSelected = { (isLiked) in
-            guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                print("Could not find cell")
-                return
+        if indexPath.section == 2 {
+            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
+            movieDetailVC.likeButtonSelected = { (isLiked) in
+                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                    print("Could not find cell")
+                    return
+                }
+                cell.likeButton.isSelected = isLiked
             }
-            cell.likeButton.isSelected = isLiked
+            navigationController?.pushViewController(movieDetailVC, animated: true)
         }
-        navigationController?.pushViewController(movieDetailVC, animated: true)
     }
 }
