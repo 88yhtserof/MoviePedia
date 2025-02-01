@@ -87,7 +87,7 @@ private extension MovieDetailViewController {
             var cell: UICollectionViewCell
             switch section {
             case .backdrop:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop)
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop?.value)
             case .synopsys:
                 cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis)
             case .cast:
@@ -141,13 +141,13 @@ private extension MovieDetailViewController {
     }
     
     struct Item: Hashable {
-        let backdrop: Image?
+        let backdrop: Identifier<Image>?
         let synopsis: String?
         let cast: Cast?
         let poster: Identifier<Image>?
         
         private init(backdrop: Image?, synopsis: String?, cast: Cast?, poster: Image?) {
-            self.backdrop = backdrop
+            self.backdrop = backdrop != nil ? Identifier(value: backdrop!) : nil
             self.synopsis = synopsis
             self.cast = cast
             self.poster = poster != nil ? Identifier(value: poster!) : nil
