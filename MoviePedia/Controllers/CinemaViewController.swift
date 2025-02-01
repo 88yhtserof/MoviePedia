@@ -45,7 +45,6 @@ final class CinemaViewController: BaseViewController {
         super.viewWillAppear(animated)
         
         if isUpdatingTodayMovieNeeded {
-            print("UOdate")
             createSnapshot()
             isUpdatingTodayMovieNeeded = false
         }
