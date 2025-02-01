@@ -13,8 +13,6 @@ import SnapKit
 
 final class MovieDetailViewController: BaseViewController {
     
-    let cast = [Credit(name: "김다미", character: "Koo Ja-yoon", profile_path: "/nRGhwfuWqcTMoTmnhK4XmcRkZ6B.jpg"), Credit(name: "조민수", character: "Dr. Baek", profile_path: "/1dC0ZRTWlvFEcDk4O6peI97zsVM.jpg"), Credit(name:  "박희순", character: "Mr. Choi", profile_path: "/s2SSzvlsSfCPP5EXhCoWUr8970F.jpg"), Credit(name: "고민시", character: "Do Myeong-hee", profile_path: "/w6GAqYilB3ej5Had7rfc6grLHPB.jpg"), Credit(name: "최정우", character: "Koo Seong-hwan", profile_path: "/doHUwUDRML1uo0PVVRXblGAJhN3.jpg"), Credit(name: "오미희", character: "Koo's wife", profile_path: "/js6ztmJnh3hlLEDm9nX6P3b1zbO.jpg"), Credit(name: "정다은", character: "Long Hair", profile_path: "/yAqywl2JDji5H9lxpdmOFIVvQTY.jpg")]
-    
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!
@@ -24,6 +22,7 @@ final class MovieDetailViewController: BaseViewController {
     private let movie: Movie
     private var backdrops: [Image] = []
     private var posters: [Image] = []
+    private var credits: [Credit] = []
     
     init(movie: Movie) {
         self.movie = movie
@@ -41,15 +40,42 @@ final class MovieDetailViewController: BaseViewController {
         configureHierarachy()
         configureConstraints()
         configureCollectionViewDataSource()
-        loadMovieImage()
+        loadMovieDetail()
     }
     
-    private func loadMovieImage() {
+    private func loadMovieDetail() {
+        let group = DispatchGroup()
+        
+        group.enter()
+        loadMovieImage() {
+            group.leave()
+        }
+
+        group.enter()
+        loadMovieCredit() {
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            self.createSnapshot()
+        }
+    }
+    
+    private func loadMovieImage(completionHandler: @escaping () -> Void) {
         let request = ImageRequest(movieID: movie.id)
         networkManager.request(api: .image(request)) { [self] (image: ImageResponse) in
             self.backdrops = image.backdrops ?? []
             self.posters = image.posters ?? []
-            self.createSnapshot()
+            completionHandler()
+        } failureHandler: { error in
+            print(error)
+        }
+    }
+    private func loadMovieCredit(completionHandler: @escaping () -> Void) {
+        let request = CreditRequest(movieID: movie.id)
+        networkManager.request(api: .credit(request)) { [self] (credit: CreditResponse) in
+            self.credits = credit.cast ?? []
+            completionHandler()
         } failureHandler: { error in
             print(error)
         }
@@ -239,14 +265,14 @@ private extension MovieDetailViewController {
     func createSnapshot() {
         let backdropItems = backdrops.prefix(5).map{ Item(backdrop: $0) }
         let synopsysItems = [Item(synopsis: movie.overview ?? "")]
-        let castItems = cast.map{ Item(cast: $0) }
+        let creditItems = credits.map{ Item(cast: $0) }
         let posterItems: [Item] = posters.map{ Item(poster: $0) }
         
         snapshot = Snapshot()
         snapshot.appendSections([.backdrop, .synopsys, .cast, .poster])
         snapshot.appendItems(backdropItems, toSection: .backdrop)
         snapshot.appendItems(synopsysItems, toSection: .synopsys)
-        snapshot.appendItems(castItems, toSection: .cast)
+        snapshot.appendItems(creditItems, toSection: .cast)
         snapshot.appendItems(posterItems, toSection: .poster)
         dataSource.apply(snapshot)
     }
