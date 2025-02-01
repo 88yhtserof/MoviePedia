@@ -306,9 +306,9 @@ extension MovieDetailViewController: UICollectionViewDelegate {
             let supplementaryView = collectionView.supplementaryView(forElementKind: "layout-footer-element-kind", at: indexPathForBackdrop)
                         
             guard let movieInfoView = supplementaryView as? MovieDetailInfoSupplementaryView else { return }
-            if movieInfoView.pageControl.currentPage != 5
-               || movieInfoView.pageControl.currentPage != backdrops.count {
-                movieInfoView.pageControl.currentPage = backdrops.count
+            if movieInfoView.pageControl.numberOfPages != 5
+               || movieInfoView.pageControl.numberOfPages != backdrops.count {
+                movieInfoView.pageControl.numberOfPages = backdrops.count > 5 ? 5 : backdrops.count
             }
             movieInfoView.pageControl.currentPage = indexPath.item
         }
