@@ -18,7 +18,9 @@ final class MovieDetailViewController: BaseViewController {
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
+    
     private let networkManager = TMDBNetworkManager.shared
+    private var likedMovies: Set<Movie> { UserDefaultsManager.user?.likedMovies ?? [] }
     
     private let movie: Movie
     private var backdrops: [Image] = []
@@ -81,6 +83,15 @@ final class MovieDetailViewController: BaseViewController {
             print(error)
         }
     }
+    
+    @objc func likedButtonTapped(_ sender: UIButton) {
+        if sender.isSelected {
+            UserDefaultsManager.user!.likedMovies.insert(movie)
+        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+        }
+        NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
+    }
 }
 
 //MARK: - Configuration
@@ -88,6 +99,10 @@ private extension MovieDetailViewController {
     func configureViews() {
         navigationItem.title = movie.title
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: likeButton)
+        
+        let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+        likeButton.isSelected = isLiked
+        likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.delegate = self

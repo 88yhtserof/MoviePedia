@@ -23,6 +23,8 @@ final class MovieSearchViewController: BaseViewController {
     private var totalPage: Int?
     private var currentSearchWord: String?
     
+    private var isUpdatingTodayMovieNeeded: Bool = false
+    
     init(searchWord: String? = nil) {
         super.init(nibName: nil, bundle: nil)
         if let searchWord {
@@ -43,7 +45,17 @@ final class MovieSearchViewController: BaseViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
+        configureNotificationObserver()
         configureCollectionViewDataSource()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if isUpdatingTodayMovieNeeded {
+            createSnapshot()
+            isUpdatingTodayMovieNeeded = false
+        }
     }
     
     private func loadSearchResults(query: String, isInitial: Bool = true) {
@@ -92,6 +104,10 @@ final class MovieSearchViewController: BaseViewController {
         }
         NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
     }
+    
+    @objc func updateLikedMovie(_ notification: Notification) {
+        isUpdatingTodayMovieNeeded = true
+    }
 }
 
 //MARK: - Configuration
@@ -119,6 +135,10 @@ private extension MovieSearchViewController {
             make.top.equalTo(searchBar.snp.bottom)
             make.bottom.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
         }
+    }
+    
+    func configureNotificationObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(updateLikedMovie), name: NSNotification.Name("LikedMovie"), object: nil)
     }
     
     func configureCollectionViewDataSource() {
