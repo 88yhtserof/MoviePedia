@@ -20,12 +20,14 @@ final class MovieDetailViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private let networkManager = TMDBNetworkManager.shared
-    private var likedMovies: Set<Movie> { UserDefaultsManager.user?.likedMovies ?? [] }
+    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
     
     private let movie: Movie
     private var backdrops: [Image] = []
     private var posters: [Image] = []
     private var credits: [Credit] = []
+    
+    var likeButtonSelected: ((Bool) -> Void)?
     
     init(movie: Movie) {
         self.movie = movie
@@ -85,12 +87,13 @@ final class MovieDetailViewController: BaseViewController {
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
+        likeButtonSelected?(sender.isSelected)
+        
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.insert(movie)
+            UserDefaultsManager.user!.likedMovies.append(movie)
         } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
             UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
         }
-        NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
     }
 }
 

@@ -18,12 +18,11 @@ final class MovieSearchViewController: BaseViewController {
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
-    private var likedMovies: Set<Movie> { UserDefaultsManager.user?.likedMovies ?? [] }
+    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
     private var currentPage: Int = 1
     private var totalPage: Int?
     private var currentSearchWord: String?
-    
-    private var isUpdatingTodayMovieNeeded: Bool = false
+    private let recenteSearchedWord: String?
     
     init(searchWord: String? = nil) {
         recenteSearchedWord = searchWord
@@ -40,7 +39,6 @@ final class MovieSearchViewController: BaseViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
-        configureNotificationObserver()
         configureCollectionViewDataSource()
         
         if let recenteSearchedWord {
@@ -87,26 +85,16 @@ final class MovieSearchViewController: BaseViewController {
         }
         recentSearches.insert(recentSearch)
         UserDefaultsManager.recentSearches = recentSearches
-        postRecentSearchNotification()
-    }
-    
-    private func postRecentSearchNotification() {
-        NotificationCenter.default.post(name: NSNotification.Name("RecentSearch"), object: nil)
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
         guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.insert(movie)
+            UserDefaultsManager.user!.likedMovies.append(movie)
         } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
             UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
         }
-        NotificationCenter.default.post(name: NSNotification.Name("LikedMovie"), object: nil)
-    }
-    
-    @objc func updateLikedMovie(_ notification: Notification) {
-        isUpdatingTodayMovieNeeded = true
     }
 }
 
@@ -135,10 +123,6 @@ private extension MovieSearchViewController {
             make.top.equalTo(searchBar.snp.bottom)
             make.bottom.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
         }
-    }
-    
-    func configureNotificationObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateLikedMovie), name: NSNotification.Name("LikedMovie"), object: nil)
     }
     
     func configureCollectionViewDataSource() {
@@ -234,7 +218,15 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard indexPath.section == 1 else { return }
         let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
+        movieDetailVC.likeButtonSelected = { (isLiked) in
+            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
         navigationController?.pushViewController(movieDetailVC, animated: true)
     }
     
