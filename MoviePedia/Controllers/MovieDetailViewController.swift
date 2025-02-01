@@ -115,9 +115,9 @@ private extension MovieDetailViewController {
             case .backdrop:
                 cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop?.value)
             case .synopsys:
-                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis)
+                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis?.value)
             case .cast:
-                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast)
+                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast?.value)
             case .poster:
                 cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.poster?.value)
             }
@@ -168,14 +168,14 @@ private extension MovieDetailViewController {
     
     struct Item: Hashable {
         let backdrop: Identifier<Image>?
-        let synopsis: String?
-        let cast: Credit?
+        let synopsis: Identifier<String>?
+        let cast: Identifier<Credit>?
         let poster: Identifier<Image>?
         
         private init(backdrop: Image?, synopsis: String?, cast: Credit?, poster: Image?) {
             self.backdrop = backdrop != nil ? Identifier(value: backdrop!) : nil
-            self.synopsis = synopsis
-            self.cast = cast
+            self.synopsis = synopsis != nil ? Identifier(value: synopsis!) : nil
+            self.cast = cast != nil ? Identifier(value: cast!) : nil
             self.poster = poster != nil ? Identifier(value: poster!) : nil
         }
         
