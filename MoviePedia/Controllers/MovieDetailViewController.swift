@@ -80,7 +80,7 @@ final class MovieDetailViewController: BaseViewController {
             self.credits = credit.cast ?? []
             completionHandler()
         } failureHandler: { error in
-            print(error)
+            self.showErrorAlert(message: error.localizedDescription)
         }
     }
     

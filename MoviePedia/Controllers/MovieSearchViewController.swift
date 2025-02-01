@@ -73,7 +73,7 @@ final class MovieSearchViewController: BaseViewController {
                 self.updateSnapshot(newItems:value.results, after: self.movies.count)
             }
         } failureHandler: { error in
-            print(error)
+            self.showErrorAlert(message: error.localizedDescription)
         }
 
     }

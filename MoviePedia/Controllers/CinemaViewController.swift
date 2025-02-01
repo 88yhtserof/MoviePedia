@@ -93,7 +93,7 @@ final class CinemaViewController: BaseViewController {
             self.todayMovies = trending.results
             self.createSnapshot()
         } failureHandler: { error in
-            print("Need to handle error")
+            self.showErrorAlert(message: error.localizedDescription)
         }
     }
     
