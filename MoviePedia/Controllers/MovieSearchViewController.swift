@@ -18,11 +18,13 @@ final class MovieSearchViewController: BaseViewController {
     
     private let networkManager = TMDBNetworkManager.shared
     private var movies: [Movie] = []
-    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     private var currentPage: Int = 1
     private var totalPage: Int?
     private var currentSearchWord: String?
     private let recenteSearchedWord: String?
+    
+    var likeButtonSelected: ((Bool, Int) -> Void)?
     
     init(searchWord: String? = nil) {
         recenteSearchedWord = searchWord
@@ -73,7 +75,7 @@ final class MovieSearchViewController: BaseViewController {
                 self.updateSnapshot(newItems:value.results, after: self.movies.count)
             }
         } failureHandler: { error in
-            print(error)
+            self.showErrorAlert(message: error.localizedDescription)
         }
 
     }
@@ -91,10 +93,11 @@ final class MovieSearchViewController: BaseViewController {
         guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
+        likeButtonSelected?(sender.isSelected, movie.id)
     }
 }
 

@@ -10,7 +10,7 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(user: user)
+    private lazy var profileInfoView = ProfileInfoView(user: user, likedMoviesCount: likedMovies.count)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let searchBarButtonItem = UIBarButtonItem()
     
@@ -18,7 +18,7 @@ final class CinemaViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private var user: User { UserDefaultsManager.user! }
-    private var likedMovies: [Movie] { UserDefaultsManager.user!.likedMovies }
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     private var recentSearches: Set<RecentSearch> {
         get {
             UserDefaultsManager.recentSearches
@@ -42,13 +42,22 @@ final class CinemaViewController: BaseViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        profileInfoView.user = user
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
         createSnapshot()
     }
     
     @objc func presentProfileEditVC() {
-        let profileNicknameEditVC = ProfileNicknameEditViewController()
-        present(profileNicknameEditVC, animated: true)
+        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
+        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
+        if let sheet = profileNicknameEditNC.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+        }
+        profileNicknameEditVC.saveProfileHandler = { user in
+            self.profileInfoView.user = user
+        }
+        present(profileNicknameEditNC, animated: true)
     }
     
     @objc func removeAllRecentSearches() {
@@ -63,9 +72,9 @@ final class CinemaViewController: BaseViewController {
         }
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
@@ -84,12 +93,21 @@ final class CinemaViewController: BaseViewController {
             self.todayMovies = trending.results
             self.createSnapshot()
         } failureHandler: { error in
-            print("Need to handle error")
+            self.showErrorAlert(message: error.localizedDescription)
         }
     }
     
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
         let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
+        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
+            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
+            let indexPath = IndexPath(item: movieIndex, section: 2)
+            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
@@ -104,7 +122,7 @@ private extension CinemaViewController {
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
-        profileInfoView.userInfoButton.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
+        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.isScrollEnabled = false
@@ -228,10 +246,6 @@ private extension CinemaViewController {
     }
 }
 
-struct MovieInfo: Hashable {
-    let movie: Movie
-    var isLiked: Bool
-}
 
 //MARK: - CollectionView DataSource
 extension CinemaViewController {
@@ -315,7 +329,7 @@ extension CinemaViewController {
         }
         
         let items = todayMovies.map{ movie in
-            let isLiked = user.likedMovies.contains(where: { $0.id == movie.id })
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
             let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
             return Item(todayMovie: movieInfo)
         }
@@ -332,14 +346,16 @@ extension CinemaViewController {
 //MARK: - CollectionView Delegate
 extension CinemaViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
-        movieDetailVC.likeButtonSelected = { (isLiked) in
-            guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                print("Could not find cell")
-                return
+        if indexPath.section == 2 {
+            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
+            movieDetailVC.likeButtonSelected = { (isLiked) in
+                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                    print("Could not find cell")
+                    return
+                }
+                cell.likeButton.isSelected = isLiked
             }
-            cell.likeButton.isSelected = isLiked
+            navigationController?.pushViewController(movieDetailVC, animated: true)
         }
-        navigationController?.pushViewController(movieDetailVC, animated: true)
     }
 }

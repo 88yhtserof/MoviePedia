@@ -42,8 +42,9 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
         likeButton.tag = movieInfo.movie.id
         
         if let path = movieInfo.movie.poster_path,
-           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
-            posterImageView.kf.setImage(with: imageURL)
+           let imageURL = URL(string: ImageNetworkAPI.original.endPoint + path) {
+            posterImageView.kf.indicatorType = .activity
+            posterImageView.kf.setImage(with: imageURL, options: [.transition(.fade(1.2))])
         }
     }
 }
@@ -52,6 +53,7 @@ final class TodayMovieCollectionViewCell: UICollectionViewCell {
 private extension TodayMovieCollectionViewCell {
     private func configureViews() {
         posterImageView.backgroundColor = .moviepedia_subbackground
+        posterImageView.tintColor = .moviepedia_tagbackground
         posterImageView.cornerRadius()
         posterImageView.contentMode = .scaleAspectFill
         

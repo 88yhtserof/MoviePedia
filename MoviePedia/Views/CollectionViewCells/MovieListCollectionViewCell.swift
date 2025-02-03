@@ -36,7 +36,6 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        // TODO: - 이미지가 없을 경우 대체 이미지 개선
         posterImageView.image = UIImage(systemName: "photo")
         likeButton.tag = 0
     }
@@ -62,8 +61,9 @@ final class MovieListCollectionViewCell: UICollectionViewCell {
         }
         
         if let path = movieInfo.movie.poster_path,
-           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
-            posterImageView.kf.setImage(with: imageURL)
+           let imageURL = URL(string: ImageNetworkAPI.w500.endPoint + path) {
+            posterImageView.kf.indicatorType = .activity
+            posterImageView.kf.setImage(with: imageURL, options: [.transition(.fade(1.2))])
         }
         
         likeButton.isSelected = movieInfo.isLiked
@@ -77,6 +77,7 @@ private extension MovieListCollectionViewCell {
     private func configureViews() {
         posterImageView.backgroundColor = .moviepedia_subbackground
         posterImageView.cornerRadius()
+        posterImageView.tintColor = .moviepedia_tagbackground
         
         titleLabel.numberOfLines = 2
         titleLabel.textColor = .moviepedia_foreground

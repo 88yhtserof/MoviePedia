@@ -167,6 +167,7 @@
 				DEVELOPMENT_TEAM = ZQV4ZDQNW5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MoviePedia/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "임윤휘";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -202,6 +203,7 @@
 				DEVELOPMENT_TEAM = ZQV4ZDQNW5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MoviePedia/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "임윤휘";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

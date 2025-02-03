@@ -15,10 +15,14 @@ final class CastCollectionViewCell: UICollectionViewCell {
     private let nameLabel = UILabel()
     private let characterLabel = UILabel()
     private lazy var labelStackView = UIStackView(arrangedSubviews: [nameLabel, characterLabel])
+    private let previewImage = UIImage(systemName: "photo")
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
+        castImageView.backgroundColor = .moviepedia_subbackground
+        castImageView.tintColor = .moviepedia_tagbackground
+        castImageView.image = previewImage
         castImageView.contentMode = .scaleAspectFill
         
         nameLabel.font = .systemFont(ofSize: 15, weight: .medium)
@@ -55,12 +59,12 @@ final class CastCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        castImageView.image = UIImage(systemName: "photo")
+        castImageView.image = previewImage
     }
     
     func configure(with cast: Credit) {
         if let path = cast.profile_path,
-           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
+           let imageURL = URL(string: ImageNetworkAPI.w500.endPoint + path) {
             castImageView.kf.setImage(with: imageURL)
         }
         

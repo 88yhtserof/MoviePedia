@@ -20,4 +20,17 @@ extension UIViewController {
         }
         window.makeKeyAndVisible()
     }
+    
+    func showAlert(title: String, message: String, Style: UIAlertController.Style, actions: [UIAlertAction]) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: Style)
+        actions
+            .forEach{ alert.addAction($0) }
+        present(alert, animated: true)
+    }
+    
+    func showErrorAlert(message: String) {
+        showAlert(title: "네트워크 오류", message: message, Style: .alert, actions: [
+            UIAlertAction(title: "확인", style: .default)
+        ])
+    }
 }

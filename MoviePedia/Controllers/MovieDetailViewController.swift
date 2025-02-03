@@ -7,9 +7,7 @@
 
 import UIKit
 import SnapKit
-
-
-
+import Kingfisher
 
 final class MovieDetailViewController: BaseViewController {
     
@@ -20,7 +18,7 @@ final class MovieDetailViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private let networkManager = TMDBNetworkManager.shared
-    private var likedMovies: [Movie] { UserDefaultsManager.user?.likedMovies ?? [] }
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     
     private let movie: Movie
     private var backdrops: [Image] = []
@@ -82,7 +80,7 @@ final class MovieDetailViewController: BaseViewController {
             self.credits = credit.cast ?? []
             completionHandler()
         } failureHandler: { error in
-            print(error)
+            self.showErrorAlert(message: error.localizedDescription)
         }
     }
     
@@ -90,9 +88,9 @@ final class MovieDetailViewController: BaseViewController {
         likeButtonSelected?(sender.isSelected)
         
         if sender.isSelected {
-            UserDefaultsManager.user!.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.user!.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.user!.likedMovies.remove(at: removeIndex)
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
         }
     }
 }
@@ -221,8 +219,10 @@ private extension MovieDetailViewController {
     
     func backdropCellRegistrationHandler(cell: ImageCollectionCell, indexPath: IndexPath, item: Image) {
         if let path = item.file_path,
-           let imageURL = URL(string: TMDBNetworkAPI.imageBaseURL + path) {
-            cell.imageView.kf.setImage(with: imageURL)
+           let imageURL = URL(string: ImageNetworkAPI.original.endPoint + path) {
+            cell.imageView.kf.indicatorType = .activity
+            cell.imageView.kf.setImage(with: imageURL,
+                                       options: [.transition(.fade(1.2))])
         }
     }
     

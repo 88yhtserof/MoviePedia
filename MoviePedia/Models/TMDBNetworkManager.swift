@@ -28,8 +28,27 @@ class TMDBNetworkManager {
                     successHandler(value)
                 case .failure(let error):
                     print("ERRORL:", error)
-                    failureHandler(error)
+                    let tmdbError = self.errorHandler(error)
+                    failureHandler(tmdbError)
                 }
             }
+    }
+    
+    private func errorHandler(_ error: AFError) -> TMDBNetworkError {
+        guard let responseCode = error.responseCode else {
+            return .unknown
+        }
+        switch responseCode {
+        case 401:
+            return .unauthorized
+        case 400...499:
+            return .badRequest
+        case 500, 501:
+            return .notExistServer
+        case 503, 504:
+            return .tryAgainLater
+        default:
+            return .unknown
+        }
     }
 }
