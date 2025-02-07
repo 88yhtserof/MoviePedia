@@ -24,7 +24,6 @@ final class ProfileImageEditViewController: BaseViewController {
     
     init(profileImageNumber: Int, isEditedMode: Bool = false) {
         print("ProfileImageEditViewController init")
-//        self.selectedImageNumber = profileImageNumber
         self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)
     }
@@ -37,12 +36,12 @@ final class ProfileImageEditViewController: BaseViewController {
         super.viewDidLoad()
 
         
-        bind()
         configureViews()
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
         configureInitial()
+        bind()
     }
     
     private func bind() {
@@ -50,6 +49,15 @@ final class ProfileImageEditViewController: BaseViewController {
             print("outputProfileImageName bind: \(profileImageName)")
             guard let self else { return }
             self.profileImageControl.image = UIImage(named: profileImageName)
+        }
+        
+        // 최초 한 번만 호출되는 로직 <- 따라서 조금 더 고민해야할 것 같음
+        // collectionView가 만들어지고 난 이후에 작동해야 함
+        viewModel.outputProfileImageNumber.bind { [weak self] profileImageNumber in
+            print("outputProfileImageNumber bind: \(profileImageNumber)")
+            guard let self else { return }
+            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
+            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
         }
     }
 }
@@ -63,8 +71,6 @@ private extension ProfileImageEditViewController {
             guard let self else { return }
 //            self.selectedImageHandler?(self.selectedImageNumber)
         }
-        
-//        profileImageControl.image = UIImage(named: String(format: "profile_%d", selectedImageNumber))
         
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
