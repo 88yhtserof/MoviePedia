@@ -16,12 +16,15 @@ final class ProfileImageEditViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
-    private var selectedImageNumber: Int
+//    private var selectedImageNumber: Int
     var selectedImageHandler: ((Int) -> Void)?
     private var isEditedMode: Bool
     
+    let viewModel = ProfileImageEditViewModel()
+    
     init(profileImageNumber: Int, isEditedMode: Bool = false) {
-        self.selectedImageNumber = profileImageNumber
+        print("ProfileImageEditViewController init")
+//        self.selectedImageNumber = profileImageNumber
         self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)
     }
@@ -33,11 +36,21 @@ final class ProfileImageEditViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
+        bind()
         configureViews()
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
         configureInitial()
+    }
+    
+    private func bind() {
+        viewModel.outputProfileImageName.bind { [weak self] profileImageName in
+            print("outputProfileImageName bind: \(profileImageName)")
+            guard let self else { return }
+            self.profileImageControl.image = UIImage(named: profileImageName)
+        }
     }
 }
 
@@ -48,10 +61,10 @@ private extension ProfileImageEditViewController {
         
         backBarButtonItemAction = { [weak self] in
             guard let self else { return }
-            self.selectedImageHandler?(self.selectedImageNumber)
+//            self.selectedImageHandler?(self.selectedImageNumber)
         }
         
-        profileImageControl.image = UIImage(named: String(format: "profile_%d", selectedImageNumber))
+//        profileImageControl.image = UIImage(named: String(format: "profile_%d", selectedImageNumber))
         
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
@@ -108,8 +121,8 @@ private extension ProfileImageEditViewController {
     }
     
     func configureInitial() {
-        let selectedItem = IndexPath(item: selectedImageNumber, section: 0)
-        collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
+//        let selectedItem = IndexPath(item: selectedImageNumber, section: 0)
+//        collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
     }
 }
 
@@ -139,7 +152,7 @@ extension ProfileImageEditViewController: UICollectionViewDelegate {
             return
         }
         selectedCell.isSelected.toggle()
-        selectedImageNumber = indexPath.item
-        profileImageControl.image = UIImage(named: profileImageNames[selectedImageNumber])
+//        selectedImageNumber = indexPath.item
+//        profileImageControl.image = UIImage(named: profileImageNames[selectedImageNumber])
     }
 }
