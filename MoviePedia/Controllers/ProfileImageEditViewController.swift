@@ -20,7 +20,7 @@ final class ProfileImageEditViewController: BaseViewController {
     
     let viewModel = ProfileImageEditViewModel()
     
-    init(profileImageNumber: Int, isEditedMode: Bool = false) {
+    init(isEditedMode: Bool = false) {
         print("ProfileImageEditViewController init")
         self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)

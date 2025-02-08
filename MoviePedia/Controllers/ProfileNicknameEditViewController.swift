@@ -25,16 +25,11 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
     private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, doneButton])
     
-    private var profileImageNumber = (0...11).randomElement()! {
-        didSet {
-            let imageName = String(format: "profile_%d", profileImageNumber)
-            profileImageControl.image = UIImage(named: imageName)
-        }
-    }
-    
     private let nicknameValidator = NicknameValidator()
     private var nickname: String?
     private var isEditedMode: Bool
+    
+    let viewModel = ProfileNicknameEditViewModel()
     
     var saveProfileHandler: ((User) -> Void)?
     
@@ -54,6 +49,18 @@ final class ProfileNicknameEditViewController: BaseViewController {
         configureViews()
         configureHierarchy()
         configureConstraints()
+        bind()
+    }
+    
+    private func bind() {
+        
+        viewModel.outputProfileImageName.lazyBind { [weak self] profileImageName in
+            print("outputProfileImageName bind: \(profileImageName)")
+            guard let self else { return }
+            self.profileImageControl.image = UIImage(named: profileImageName)
+        }
+        
+        viewModel.inputViewDidLoad.send()
     }
     
     @objc func dismissBarButtonItemTapped() {
@@ -61,18 +68,19 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func saveBarButtonItemTapped() {
-        guard let user = saveProfileData() else { return }
-        saveProfileHandler?(user)
-        dismiss(animated: true)
+//        guard let user = saveProfileData() else { return }
+//        saveProfileHandler?(user)
+//        dismiss(animated: true)
     }
     
     @objc func profileImageControlDidTapped() {
-        let profileImageEditVC = ProfileImageEditViewController(profileImageNumber: profileImageNumber)
+        let profileImageNumber = viewModel.outputProfileImageNumber.value
+        let profileImageEditVC = ProfileImageEditViewController()
         profileImageEditVC.viewModel.inputProfileImageNumber.send(profileImageNumber)
         profileImageEditVC.viewModel.outputSendProfileImageNumber.lazyBind{ [weak self] number in
             print("outputSendProfileImageNumber bind")
             guard let self else { return }
-            self.profileImageNumber = number
+            self.viewModel.inputProfileImageNumber.send(number)
             
         }
         self.navigationController?.pushViewController(profileImageEditVC, animated: true)
@@ -102,21 +110,21 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func doneButtonDidTapped() {
-        saveProfileData()
+//        saveProfileData()
         UserDefaultsManager.isOnboardingNotNeeded = true
         
         let mainVC = MainTabBarViewController()
         switchRootViewController(rootViewController: mainVC)
     }
     
-    @discardableResult
-    private func saveProfileData() -> User? {
-        guard let nickname else { return nil }
-        let profileImageName = String(format: "profile_%d", profileImageNumber)
-        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
-        UserDefaultsManager.user = user
-        return user
-    }
+//    @discardableResult
+//    private func saveProfileData() -> User? {
+//        guard let nickname else { return nil }
+//        let profileImageName = String(format: "profile_%d", profileImageNumber)
+//        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
+//        UserDefaultsManager.user = user
+//        return user
+//    }
 }
 
 
@@ -143,13 +151,11 @@ private extension ProfileNicknameEditViewController {
         
         if let image = user.profileImage.components(separatedBy: "_").last,
            let number = Int(image) {
-            profileImageNumber = number
+//            profileImageNumber = number
         }
     }
     
     func configureViews() {
-        let image = UIImage(named: String(format: "profile_%d", profileImageNumber))
-        profileImageControl.image = image
         profileImageControl.addTarget(self, action: #selector(profileImageControlDidTapped), for: .touchUpInside)
         
         nicknameTextField.textField.placeholder = LiteralText.placeholder.text
