@@ -25,6 +25,9 @@ final class ProfileImageEditViewModel {
     let outputProfileImageName: Observable<String> = Observable("")
     let outputProfileImageNumber: Observable<Int> = Observable(0)
     
+    // DATA
+    lazy var profileImageNames = (0...11).map({ profileImageName(at: $0) })
+    
     init() {
         print("ProfileImageEditViewModel init")
         
@@ -43,8 +46,12 @@ final class ProfileImageEditViewModel {
 
 private extension ProfileImageEditViewModel {
     
+    func profileImageName(at profileImageNumber: Int) -> String {
+        return String(format: "profile_%d", profileImageNumber)
+    }
+    
     func configureProfileImageName(at profileImageNumber: Int) {
-        let profileImageName = String(format: "profile_%d", profileImageNumber)
+        let profileImageName = profileImageName(at: profileImageNumber)
         self.outputProfileImageName.send(profileImageName)
         // outputProfileImageNamet이 아직 정의되어 있지 않아 value를 보내도 클로저가 응답하지 않음, 따라서 초기값을 가지고 있다가 이후 클로저가 구성되면 호출된다. 따라서 outputProfileImageName는 lazy하게 정의 되면 안 된다.
         // outputProfileImageNumber도 동일

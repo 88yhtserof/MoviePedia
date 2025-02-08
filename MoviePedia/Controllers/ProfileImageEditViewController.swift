@@ -15,7 +15,6 @@ final class ProfileImageEditViewController: BaseViewController {
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
-    private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
 //    private var selectedImageNumber: Int
     var selectedImageHandler: ((Int) -> Void)?
     private var isEditedMode: Bool
@@ -56,8 +55,8 @@ final class ProfileImageEditViewController: BaseViewController {
         viewModel.outputProfileImageNumber.bind { [weak self] profileImageNumber in
             print("outputProfileImageNumber bind: \(profileImageNumber)")
             guard let self else { return }
-            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
-            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
+//            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
+//            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
         }
     }
 }
@@ -138,14 +137,14 @@ private extension ProfileImageEditViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, String>
     
     func cellRegistrationHandler(cell: ProfileImageCollectionViewCell, indexPath: IndexPath, item: Int) {
-        let profileImageName = self.profileImageNames[indexPath.item]
+        let profileImageName = viewModel.profileImageNames[indexPath.item]
         cell.configue(with: profileImageName)
     }
     
     func createSnapshot() {
         snapshot = Snapshot()
         snapshot.appendSections([0])
-        snapshot.appendItems(profileImageNames)
+        snapshot.appendItems(viewModel.profileImageNames)
         dataSource.apply(snapshot)
     }
 }
@@ -158,7 +157,6 @@ extension ProfileImageEditViewController: UICollectionViewDelegate {
             return
         }
         selectedCell.isSelected.toggle()
-//        selectedImageNumber = indexPath.item
-//        profileImageControl.image = UIImage(named: profileImageNames[selectedImageNumber])
+        viewModel.inputProfileImageNumber.send(indexPath.item)
     }
 }
