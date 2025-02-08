@@ -69,9 +69,12 @@ final class ProfileNicknameEditViewController: BaseViewController {
     @objc func profileImageControlDidTapped() {
         let profileImageEditVC = ProfileImageEditViewController(profileImageNumber: profileImageNumber)
         profileImageEditVC.viewModel.inputProfileImageNumber.send(profileImageNumber)
-//        profileImageEditVC.selectedImageHandler = { selectedImageNumber in
-//            self.profileImageNumber = selectedImageNumber
-//        }
+        profileImageEditVC.viewModel.outputSendProfileImageNumber.lazyBind{ [weak self] number in
+            print("outputSendProfileImageNumber bind")
+            guard let self else { return }
+            self.profileImageNumber = number
+            
+        }
         self.navigationController?.pushViewController(profileImageEditVC, animated: true)
     }
     

@@ -15,8 +15,7 @@ final class ProfileImageEditViewController: BaseViewController {
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
-//    private var selectedImageNumber: Int
-    var selectedImageHandler: ((Int) -> Void)?
+    
     private var isEditedMode: Bool
     
     let viewModel = ProfileImageEditViewModel()
@@ -31,6 +30,11 @@ final class ProfileImageEditViewController: BaseViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        // 호출이 되고 있지 않음
+        print("ProfileImageEditViewController deinit")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -39,24 +43,24 @@ final class ProfileImageEditViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
-        configureInitial()
         bind()
     }
     
     private func bind() {
+        
+        viewModel.inputViewDidLoad.send()
+        
         viewModel.outputProfileImageName.bind { [weak self] profileImageName in
             print("outputProfileImageName bind: \(profileImageName)")
             guard let self else { return }
             self.profileImageControl.image = UIImage(named: profileImageName)
         }
         
-        // 최초 한 번만 호출되는 로직 <- 따라서 조금 더 고민해야할 것 같음
-        // collectionView가 만들어지고 난 이후에 작동해야 함
-        viewModel.outputProfileImageNumber.bind { [weak self] profileImageNumber in
-            print("outputProfileImageNumber bind: \(profileImageNumber)")
+        viewModel.outputInitSelectedProfileImageItem.bind { [weak self] profileImageNumber in
+            print("outputInitSelectedProfileImageItem bind: \(profileImageNumber)")
             guard let self else { return }
-//            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
-//            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
+            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
+            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
         }
     }
 }
@@ -68,7 +72,7 @@ private extension ProfileImageEditViewController {
         
         backBarButtonItemAction = { [weak self] in
             guard let self else { return }
-//            self.selectedImageHandler?(self.selectedImageNumber)
+            self.viewModel.inputPopPreviousVC.send()
         }
         
         collectionView.isScrollEnabled = false
@@ -124,11 +128,6 @@ private extension ProfileImageEditViewController {
         
         return UICollectionViewCompositionalLayout(section: section)
     }
-    
-    func configureInitial() {
-//        let selectedItem = IndexPath(item: selectedImageNumber, section: 0)
-//        collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
-    }
 }
 
 //MARK: - DiffalbleDataSource
@@ -142,9 +141,10 @@ private extension ProfileImageEditViewController {
     }
     
     func createSnapshot() {
+        let items = viewModel.profileImageNames
         snapshot = Snapshot()
         snapshot.appendSections([0])
-        snapshot.appendItems(viewModel.profileImageNames)
+        snapshot.appendItems(items)
         dataSource.apply(snapshot)
     }
 }

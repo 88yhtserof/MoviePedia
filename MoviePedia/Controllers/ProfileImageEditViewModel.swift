@@ -20,12 +20,17 @@ final class ProfileImageEditViewModel {
     
     // IN
     let inputProfileImageNumber: Observable<Int> = Observable(0)
+    let inputViewDidLoad: Observable<Void> = Observable(())
+    let inputPopPreviousVC: Observable<Void> = Observable(())
     
     // OUT
+    let outputInitSelectedProfileImageItem: Observable<Int> = Observable(0)
     let outputProfileImageName: Observable<String> = Observable("")
-    let outputProfileImageNumber: Observable<Int> = Observable(0)
+    let outputProfileImageNumbe: Observable<Int> = Observable(0)
+    let outputSendProfileImageNumber: Observable<Int> = Observable(0)
     
     // DATA
+    private var profileImageNumber: Int = 0
     lazy var profileImageNames = (0...11).map({ profileImageName(at: $0) })
     
     init() {
@@ -34,12 +39,25 @@ final class ProfileImageEditViewModel {
         inputProfileImageNumber.lazyBind { [weak self] number in
             print("inputProfileImageNumber bind")
             guard let self else { return }
-            self.outputProfileImageNumber.send(number)
+            self.profileImageNumber = number
             self.configureProfileImageName(at: number)
+        }
+        
+        inputViewDidLoad.lazyBind { [weak self] _ in
+            print("inputViewDidLoad bind")
+            guard let self else { return }
+            self.outputInitSelectedProfileImageItem.send(self.profileImageNumber)
+        }
+        
+        inputPopPreviousVC.lazyBind { [weak self] _ in
+            print("inputPopPreviousVC bind")
+            guard let self else { return }
+            self.outputSendProfileImageNumber.send(self.profileImageNumber)
         }
     }
     
     deinit {
+        // 호출이 되고 있지 않음
         print("ProfileImageEditViewModel deinit")
     }
 }
