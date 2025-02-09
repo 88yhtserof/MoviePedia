@@ -7,6 +7,8 @@
 
 import Foundation
 
+typealias ValidationResult = Result<String, NicknameValidator.ValidationError>
+
 class NicknameValidator {
     private var trimmedNickname: String?
     

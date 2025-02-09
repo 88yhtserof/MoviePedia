@@ -25,8 +25,6 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
     private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, doneButton])
     
-    private let nicknameValidator = NicknameValidator()
-    private var nickname: String?
     private var isEditedMode: Bool
     
     let viewModel = ProfileNicknameEditViewModel()
@@ -60,6 +58,28 @@ final class ProfileNicknameEditViewController: BaseViewController {
             self.profileImageControl.image = UIImage(named: profileImageName)
         }
         
+        viewModel.outputNicknameValidationResult.lazyBind { [weak self] result in
+            print("outputNicknameValidationResult bind: \(result)")
+            guard let self else { return }
+            
+            var isEnabled: Bool
+            
+            switch result {
+            case .success(let statusText):
+                self.nicknameTextField.statusText = statusText
+                isEnabled = true
+            case .failure(let error):
+                self.nicknameTextField.statusText = error.description
+                isEnabled = false
+            }
+            
+            if isEditedMode {
+                self.navigationItem.rightBarButtonItem?.isEnabled = isEnabled
+            } else {
+                doneButton.isUserInteractionEnabled = isEnabled
+            }
+        }
+        
         viewModel.inputViewDidLoad.send()
     }
     
@@ -87,26 +107,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func nicknameTextFieldEditingChanged(_ sender: UITextField) {
-        guard let text = sender.text else { return }
-        
-        do {
-            nickname = try nicknameValidator.validateNickname(of: text)
-            nicknameTextField.statusText = LiteralText.statusText.text
-            if isEditedMode {
-                navigationItem.rightBarButtonItem?.isEnabled = true
-            } else {
-                doneButton.isUserInteractionEnabled = true
-            }
-        } catch let error as NicknameValidator.ValidationError {
-            nicknameTextField.statusText = error.description
-            if isEditedMode {
-                navigationItem.rightBarButtonItem?.isEnabled = false
-            } else {
-                doneButton.isUserInteractionEnabled = false
-            }
-        } catch {
-            print("Unexpected error: \(error)")
-        }
+        viewModel.inputEditingChangedNickname.send(sender.text)
     }
     
     @objc func doneButtonDidTapped() {
@@ -147,7 +148,7 @@ private extension ProfileNicknameEditViewController {
         navigationItem.rightBarButtonItem = saveBarButtonItem
         doneButton.isHidden = true
         nicknameTextField.textField.text = user.nickname
-        nickname = user.nickname
+//        nickname = user.nickname
         
         if let image = user.profileImage.components(separatedBy: "_").last,
            let number = Int(image) {
