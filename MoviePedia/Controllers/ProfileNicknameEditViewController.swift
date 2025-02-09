@@ -22,8 +22,10 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     private let profileImageControl = ProfileImageCameraControl()
     private let nicknameTextField = StatusLableTextFieldView()
+    private let profileMBTIOptionView = ProfileMBTIOptionView()
+    private let profileMBTIOptionSettingContainerView = ProfileOptionSettingContainerView()
     private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
-    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, doneButton])
+    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, profileMBTIOptionSettingContainerView, doneButton])
     
     private var isEditedMode: Bool
     
@@ -163,6 +165,10 @@ private extension ProfileNicknameEditViewController {
         
         nicknameTextField.textField.placeholder = LiteralText.placeholder.text
         nicknameTextField.textField.textField.addTarget(self, action: #selector(nicknameTextFieldEditingChanged), for: .editingChanged)
+        
+        
+        profileMBTIOptionSettingContainerView.titleLabel.text = "MBTI"
+        profileMBTIOptionSettingContainerView.view = profileMBTIOptionView
         
         doneButton.isUserInteractionEnabled = false
         doneButton.addTarget(self, action: #selector(doneButtonDidTapped), for: .touchUpInside)
