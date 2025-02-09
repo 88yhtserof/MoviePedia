@@ -25,7 +25,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     private let profileMBTIOptionView = ProfileMBTIOptionView()
     private let profileMBTIOptionSettingContainerView = ProfileOptionSettingContainerView()
     private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
-    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, profileMBTIOptionSettingContainerView, doneButton])
+    private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, profileMBTIOptionSettingContainerView])
     
     private var isEditedMode: Bool
     
@@ -50,6 +50,11 @@ final class ProfileNicknameEditViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         bind()
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        view.endEditing(true)
     }
     
     private func bind() {
@@ -180,7 +185,7 @@ private extension ProfileNicknameEditViewController {
     }
     
     func configureHierarchy() {
-        view.addSubviews(profileImageControl, stackView)
+        view.addSubviews(profileImageControl, stackView, doneButton)
     }
     
     func configureConstraints() {
@@ -192,6 +197,12 @@ private extension ProfileNicknameEditViewController {
         
         stackView.snp.makeConstraints { make in
             make.top.equalTo(profileImageControl.snp.bottom).offset(30)
+            make.horizontalEdges.equalToSuperview().inset(8)
+        }
+        
+        doneButton.snp.makeConstraints { make in
+            make.top.greaterThanOrEqualTo(stackView.snp.bottom).offset(5)
+            make.bottom.equalTo(view.keyboardLayoutGuide.snp.top).inset(-30)
             make.horizontalEdges.equalToSuperview().inset(8)
         }
     }

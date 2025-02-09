@@ -49,7 +49,7 @@ private extension ProfileOptionSettingContainerView {
         
         titleLabel.snp.makeConstraints { make in
             make.leading.top.equalToSuperview()
-            make.width.equalTo(60)
+            make.width.equalTo(100)
         }
         
         containerView.snp.makeConstraints { make in

@@ -32,7 +32,7 @@ class ProfileMBTIOptionView: UIView {
 private extension ProfileMBTIOptionView {
     func configureViews() {
         stackView.axis = .horizontal
-        stackView.spacing = 8
+        stackView.spacing = 12
         stackView.distribution = .fillEqually
         
         firstToggleControl.firstButton.title = "E"
