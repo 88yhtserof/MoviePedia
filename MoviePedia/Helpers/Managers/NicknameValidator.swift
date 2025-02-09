@@ -7,6 +7,8 @@
 
 import Foundation
 
+typealias ValidationResult = Result<String, NicknameValidator.ValidationError>
+
 class NicknameValidator {
     private var trimmedNickname: String?
     
@@ -34,6 +36,10 @@ class NicknameValidator {
     func validateNickname(of nickname: String) throws -> String? {
         trimmedNickname = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
         
+        guard let trimmedNickname, !trimmedNickname.isEmpty else {
+            throw ValidationError.none
+        }
+        
         guard validateCount() else {
             throw ValidationError.invalidCount
         }
@@ -50,12 +56,15 @@ class NicknameValidator {
     }
     
     enum ValidationError: Error {
+        case none
         case invalidCount
         case usingNumber
         case usingSpecialCharacter
         
         var description: String {
             switch self {
+            case .none:
+                return ""
             case .invalidCount:
                 return "2글자 이상 10글자 미만으로 설정해주세요"
             case .usingNumber:

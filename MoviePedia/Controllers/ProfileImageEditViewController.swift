@@ -15,13 +15,13 @@ final class ProfileImageEditViewController: BaseViewController {
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
-    private let profileImageNames = (0...11).map({ String(format: "profile_%d", $0) })
-    private var selectedImageNumber: Int
-    var selectedImageHandler: ((Int) -> Void)?
+    
     private var isEditedMode: Bool
     
-    init(profileImageNumber: Int, isEditedMode: Bool = false) {
-        self.selectedImageNumber = profileImageNumber
+    let viewModel = ProfileImageEditViewModel()
+    
+    init(isEditedMode: Bool = false) {
+        print("ProfileImageEditViewController init")
         self.isEditedMode = isEditedMode
         super.init(nibName: nil, bundle: nil)
     }
@@ -30,14 +30,38 @@ final class ProfileImageEditViewController: BaseViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        // 호출이 되고 있지 않음
+        print("ProfileImageEditViewController deinit")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
         configureViews()
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
-        configureInitial()
+        bind()
+    }
+    
+    private func bind() {
+        
+        viewModel.inputViewDidLoad.send()
+        
+        viewModel.outputProfileImageName.bind { [weak self] profileImageName in
+            print("outputProfileImageName bind: \(profileImageName)")
+            guard let self else { return }
+            self.profileImageControl.image = UIImage(named: profileImageName)
+        }
+        
+        viewModel.outputInitSelectedProfileImageItem.bind { [weak self] profileImageNumber in
+            print("outputInitSelectedProfileImageItem bind: \(profileImageNumber)")
+            guard let self else { return }
+            let selectedItem = IndexPath(item: profileImageNumber, section: 0)
+            self.collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
+        }
     }
 }
 
@@ -48,10 +72,8 @@ private extension ProfileImageEditViewController {
         
         backBarButtonItemAction = { [weak self] in
             guard let self else { return }
-            self.selectedImageHandler?(self.selectedImageNumber)
+            self.viewModel.inputPopPreviousVC.send()
         }
-        
-        profileImageControl.image = UIImage(named: String(format: "profile_%d", selectedImageNumber))
         
         collectionView.isScrollEnabled = false
         collectionView.backgroundColor = .clear
@@ -106,11 +128,6 @@ private extension ProfileImageEditViewController {
         
         return UICollectionViewCompositionalLayout(section: section)
     }
-    
-    func configureInitial() {
-        let selectedItem = IndexPath(item: selectedImageNumber, section: 0)
-        collectionView.selectItem(at: selectedItem, animated: false, scrollPosition: .top)
-    }
 }
 
 //MARK: - DiffalbleDataSource
@@ -119,14 +136,15 @@ private extension ProfileImageEditViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, String>
     
     func cellRegistrationHandler(cell: ProfileImageCollectionViewCell, indexPath: IndexPath, item: Int) {
-        let profileImageName = self.profileImageNames[indexPath.item]
+        let profileImageName = viewModel.profileImageNames[indexPath.item]
         cell.configue(with: profileImageName)
     }
     
     func createSnapshot() {
+        let items = viewModel.profileImageNames
         snapshot = Snapshot()
         snapshot.appendSections([0])
-        snapshot.appendItems(profileImageNames)
+        snapshot.appendItems(items)
         dataSource.apply(snapshot)
     }
 }
@@ -139,7 +157,6 @@ extension ProfileImageEditViewController: UICollectionViewDelegate {
             return
         }
         selectedCell.isSelected.toggle()
-        selectedImageNumber = indexPath.item
-        profileImageControl.image = UIImage(named: profileImageNames[selectedImageNumber])
+        viewModel.inputProfileImageNumber.send(indexPath.item)
     }
 }

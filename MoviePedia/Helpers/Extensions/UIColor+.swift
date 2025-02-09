@@ -14,6 +14,7 @@ extension UIColor {
     static let moviepedia_tagbackground = UIColor(named: MoviePediaColor.lightGray.title) ?? .black
     static let moviepedia_subbackground = UIColor(named: MoviePediaColor.darkGray.title) ?? .black
     static let moviepedia_background = UIColor(named: MoviePediaColor.black.title) ?? .black
+    static let moviepedia_error = UIColor(named: MoviePediaColor.red.title) ?? .black
     
     enum MoviePediaColor: String {
         case blue = "moviepedia_blue"
@@ -21,6 +22,7 @@ extension UIColor {
         case lightGray = "moviepedia_lightGray"
         case darkGray = "moviepedia_darkGray"
         case black = "moviepedia_black"
+        case red = "moviepedia_red"
         
         var title: String {
             return rawValue
