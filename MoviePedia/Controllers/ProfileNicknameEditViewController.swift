@@ -10,21 +10,11 @@ import SnapKit
 
 final class ProfileNicknameEditViewController: BaseViewController {
     
-    private enum LiteralText: String {
-        case buttonTitle = "완료"
-        case placeholder = "예) 무피아"
-        case statusText = "사용할 수 있는 닉네임이에요"
-        
-        var text: String {
-            return rawValue
-        }
-    }
-    
     private let profileImageControl = ProfileImageCameraControl()
     private let nicknameTextField = StatusLableTextFieldView()
     private let profileMBTIOptionView = ProfileMBTIOptionView()
     private let profileMBTIOptionSettingContainerView = ProfileOptionSettingContainerView()
-    private let doneButton = BorderLineButton(title: LiteralText.buttonTitle.text)
+    private let doneButton = BorderLineButton(title: "완료")
     private lazy var stackView = UIStackView(arrangedSubviews: [profileImageControl, nicknameTextField, profileMBTIOptionSettingContainerView])
     
     private var isEditedMode: Bool
@@ -89,6 +79,16 @@ final class ProfileNicknameEditViewController: BaseViewController {
             }
         }
         
+        viewModel.outputDoneButtonIsEnabled.lazyBind { [weak self ] isEnabled in
+            self?.doneButton.isUserInteractionEnabled = isEnabled
+        }
+        
+        viewModel.outProfileInfoSaveResult.lazyBind { [weak self] result in
+            guard let self, let result else { return }
+            saveProfileHandler?(result)
+            dismiss(animated: true)
+        }
+        
         viewModel.inputViewDidLoad.send()
     }
     
@@ -97,9 +97,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func saveBarButtonItemTapped() {
-//        guard let user = saveProfileData() else { return }
-//        saveProfileHandler?(user)
-//        dismiss(animated: true)
+        viewModel.inputSaveProfileInfo.send()
     }
     
     @objc func profileImageControlDidTapped() {
@@ -120,7 +118,7 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func doneButtonDidTapped() {
-//        saveProfileData()
+        viewModel.inputSaveProfileInfo.send()
         UserDefaultsManager.isOnboardingNotNeeded = true
         
         let mainVC = MainTabBarViewController()
@@ -143,15 +141,6 @@ final class ProfileNicknameEditViewController: BaseViewController {
             break
         }
     }
-    
-//    @discardableResult
-//    private func saveProfileData() -> User? {
-//        guard let nickname else { return nil }
-//        let profileImageName = String(format: "profile_%d", profileImageNumber)
-//        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
-//        UserDefaultsManager.user = user
-//        return user
-//    }
 }
 
 
@@ -185,7 +174,7 @@ private extension ProfileNicknameEditViewController {
     func configureViews() {
         profileImageControl.addTarget(self, action: #selector(profileImageControlDidTapped), for: .touchUpInside)
         
-        nicknameTextField.textField.placeholder = LiteralText.placeholder.text
+        nicknameTextField.textField.placeholder = "예) 무비"
         nicknameTextField.textField.textField.addTarget(self, action: #selector(nicknameTextFieldEditingChanged), for: .editingChanged)
         
         

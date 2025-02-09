@@ -13,7 +13,9 @@ final class ProfileNicknameEditViewModel {
     let inputViewDidLoad: Observable<Void> = Observable(())
     let inputProfileImageNumber: Observable<Int> = Observable(0)
     let inputEditingChangedNickname: Observable<String?> = Observable(nil)
+    let inputNicknameResult: Observable<String?> = Observable(nil)
     let inputMBTIResultValueChaned: Observable<[String]?> = Observable(nil)
+    let inputSaveProfileInfo: Observable<Void> = Observable(())
     
     let inputMBTIEneryValueChanged: Observable<String?> = Observable(nil)
     let inputMBTIPerceptionValueChanged: Observable<String?> = Observable(nil)
@@ -24,10 +26,12 @@ final class ProfileNicknameEditViewModel {
     let outputProfileImageName: Observable<String> = Observable("")
     let outputProfileImageNumber: Observable<Int> = Observable(0)
     let outputNicknameValidationResult: Observable<ValidationResult> = Observable(.success(""))
+    let outputDoneButtonIsEnabled: Observable<Bool> = Observable(false)
+    let outProfileInfoSaveResult: Observable<User?> = Observable(nil)
     
     // DATA
     private let nicknameValidator = NicknameValidator()
-    private var nickname: String?
+//    private var nickname: String?
     
     init() {
         print("ProfileNicknameEditViewModel init")
@@ -66,6 +70,17 @@ final class ProfileNicknameEditViewModel {
         
         inputMBTIResultValueChaned.lazyBind { [weak self] result in
             print("inputMBTIResultValueChanged bind", result)
+            self?.checkDoneButtonStatus()
+        }
+        
+        inputNicknameResult.lazyBind { [weak self] result in
+            print("inputNicknameResult bind", result)
+            self?.checkDoneButtonStatus()
+        }
+        
+        inputSaveProfileInfo.lazyBind { [weak self] _ in
+            print("inputSaveProfileInfo bind")
+            self?.saveProfileData()
         }
         
     }
@@ -86,12 +101,13 @@ private extension ProfileNicknameEditViewModel {
         guard let text else { return }
         
         do {
-            self.nickname = try self.nicknameValidator.validateNickname(of: text)
+            let nickname = try self.nicknameValidator.validateNickname(of: text)
             self.outputNicknameValidationResult.send(.success("사용할 수 있는 닉네임이에요"))
+            self.inputNicknameResult.send(nickname)
             
         } catch let error as NicknameValidator.ValidationError {
             self.outputNicknameValidationResult.send(.failure(error))
-            
+            self.inputNicknameResult.send(nil)
         } catch {
             print("Unexpected error: \(error)")
         }
@@ -108,5 +124,23 @@ private extension ProfileNicknameEditViewModel {
         }
         let result = [ energy, perception, judgment, lifeStyle ]
         inputMBTIResultValueChaned.send(result)
+    }
+    
+    func checkDoneButtonStatus() {
+        guard inputNicknameResult.value != nil,
+              inputMBTIResultValueChaned.value != nil
+        else {
+            outputDoneButtonIsEnabled.send(false)
+            return
+        }
+        outputDoneButtonIsEnabled.send(true)
+    }
+    
+    private func saveProfileData() {
+        guard let nickname = inputNicknameResult.value else { return }
+        let profileImageName = outputProfileImageName.value
+        let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
+        UserDefaultsManager.user = user
+        outProfileInfoSaveResult.send(user)
     }
 }
