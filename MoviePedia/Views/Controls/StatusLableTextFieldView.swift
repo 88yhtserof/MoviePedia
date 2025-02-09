@@ -19,6 +19,12 @@ final class StatusLableTextFieldView: UIView {
         }
     }
     
+    var statusColor: UIColor? {
+        didSet {
+            statusLabel.textColor = statusColor
+        }
+    }
+    
     init(statusText: String? = nil) {
         self.statusText = statusText
         super.init(frame: .zero)

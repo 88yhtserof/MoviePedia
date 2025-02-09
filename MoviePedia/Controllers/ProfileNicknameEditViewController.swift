@@ -67,9 +67,11 @@ final class ProfileNicknameEditViewController: BaseViewController {
             switch result {
             case .success(let statusText):
                 self.nicknameTextField.statusText = statusText
+                self.nicknameTextField.statusColor = .moviepedia_point
                 isEnabled = true
             case .failure(let error):
                 self.nicknameTextField.statusText = error.description
+                self.nicknameTextField.statusColor = .moviepedia_error
                 isEnabled = false
             }
             
