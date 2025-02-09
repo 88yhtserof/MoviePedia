@@ -127,6 +127,23 @@ final class ProfileNicknameEditViewController: BaseViewController {
         switchRootViewController(rootViewController: mainVC)
     }
     
+    @objc func MBTIToggleButtonDidTapped(_ sender: UIControl) {
+        guard let button = sender as? ToggleSelectionControl else { return }
+        
+        switch sender.tag {
+        case 0:
+            viewModel.inputMBTIEneryValueChanged.send(button.selectedValue)
+        case 1:
+            viewModel.inputMBTIPerceptionValueChanged.send(button.selectedValue)
+        case 2:
+            viewModel.inputMBTIJudgmentValueChanged.send(button.selectedValue)
+        case 3:
+            viewModel.inputMBTILifeStyleValueChanged.send(button.selectedValue)
+        default:
+            break
+        }
+    }
+    
 //    @discardableResult
 //    private func saveProfileData() -> User? {
 //        guard let nickname else { return nil }
@@ -174,6 +191,14 @@ private extension ProfileNicknameEditViewController {
         
         profileMBTIOptionSettingContainerView.titleLabel.text = "MBTI"
         profileMBTIOptionSettingContainerView.view = profileMBTIOptionView
+        
+        [ profileMBTIOptionView.firstToggleControl,
+          profileMBTIOptionView.secondToggleControl,
+          profileMBTIOptionView.thirdToggleControl,
+          profileMBTIOptionView.fourthToggleControl ]
+            .forEach {
+                $0.addTarget(self, action: #selector(MBTIToggleButtonDidTapped), for: .valueChanged)
+        }
         
         doneButton.isUserInteractionEnabled = false
         doneButton.addTarget(self, action: #selector(doneButtonDidTapped), for: .touchUpInside)

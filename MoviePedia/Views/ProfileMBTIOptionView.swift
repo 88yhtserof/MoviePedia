@@ -10,11 +10,11 @@ import SnapKit
 
 class ProfileMBTIOptionView: UIView {
     
-    private let firstToggleControl = ToggleSelectionControl()
-    private let secondToggleControl = ToggleSelectionControl()
-    private let thirdToggleControl = ToggleSelectionControl()
-    private let fourthToggleControl = ToggleSelectionControl()
-    private lazy var stackView = UIStackView(arrangedSubviews: [firstToggleControl, secondToggleControl, thirdToggleControl, fourthToggleControl])
+    let firstToggleControl = ToggleSelectionControl()
+    let secondToggleControl = ToggleSelectionControl()
+    let thirdToggleControl = ToggleSelectionControl()
+    let fourthToggleControl = ToggleSelectionControl()
+    lazy var stackView = UIStackView(arrangedSubviews: [firstToggleControl, secondToggleControl, thirdToggleControl, fourthToggleControl])
     
     init() {
         super.init(frame: .zero)
@@ -37,15 +37,19 @@ private extension ProfileMBTIOptionView {
         
         firstToggleControl.firstButton.title = "E"
         firstToggleControl.secondButton.title = "I"
+        firstToggleControl.tag = 0
         
         secondToggleControl.firstButton.title = "S"
         secondToggleControl.secondButton.title = "N"
+        secondToggleControl.tag = 1
         
         thirdToggleControl.firstButton.title = "T"
         thirdToggleControl.secondButton.title = "F"
+        thirdToggleControl.tag = 2
         
         fourthToggleControl.firstButton.title = "J"
         fourthToggleControl.secondButton.title = "P"
+        fourthToggleControl.tag = 3
     }
     
     func configureHierarachy() {

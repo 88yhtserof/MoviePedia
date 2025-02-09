@@ -14,6 +14,8 @@ class ToggleSelectionControl: UIControl {
     let secondButton = CircleFilledButton()
     private lazy var stackView = UIStackView(arrangedSubviews: [firstButton, secondButton])
     
+    var selectedValue: String?
+    
     init() {
         super.init(frame: .zero)
         
@@ -27,13 +29,18 @@ class ToggleSelectionControl: UIControl {
     }
     
     @objc func buttonTapped(_ sender: UIButton) {
-        guard sender.isSelected else { return }
-        
-        if sender == firstButton {
-            secondButton.isSelected = false
+        if !sender.isSelected {
+            selectedValue = nil
         } else {
-            firstButton.isSelected = false
+            if sender == firstButton {
+                secondButton.isSelected = false
+                selectedValue = firstButton.title
+            } else {
+                firstButton.isSelected = false
+                selectedValue = secondButton.title
+            }
         }
+        sendActions(for: .valueChanged)
     }
 }
 

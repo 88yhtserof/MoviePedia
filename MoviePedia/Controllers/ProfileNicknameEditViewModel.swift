@@ -13,6 +13,12 @@ final class ProfileNicknameEditViewModel {
     let inputViewDidLoad: Observable<Void> = Observable(())
     let inputProfileImageNumber: Observable<Int> = Observable(0)
     let inputEditingChangedNickname: Observable<String?> = Observable(nil)
+    let inputMBTIResultValueChaned: Observable<[String]?> = Observable(nil)
+    
+    let inputMBTIEneryValueChanged: Observable<String?> = Observable(nil)
+    let inputMBTIPerceptionValueChanged: Observable<String?> = Observable(nil)
+    let inputMBTIJudgmentValueChanged: Observable<String?> = Observable(nil)
+    let inputMBTILifeStyleValueChanged: Observable<String?> = Observable(nil)
     
     // OUT
     let outputProfileImageName: Observable<String> = Observable("")
@@ -46,6 +52,22 @@ final class ProfileNicknameEditViewModel {
             guard let self else { return }
             self.validateNickname(text)
         }
+        
+        [ inputMBTIEneryValueChanged,
+          inputMBTIPerceptionValueChanged,
+          inputMBTIJudgmentValueChanged,
+          inputMBTILifeStyleValueChanged ]
+            .forEach {
+                $0.lazyBind { [weak self] _ in
+                    print("inputMBTIXXXValueChaned bind")
+                    self?.checkMBTIResult()
+                }
+            }
+        
+        inputMBTIResultValueChaned.lazyBind { [weak self] result in
+            print("inputMBTIResultValueChanged bind", result)
+        }
+        
     }
     
     deinit {
@@ -73,5 +95,18 @@ private extension ProfileNicknameEditViewModel {
         } catch {
             print("Unexpected error: \(error)")
         }
+    }
+    
+    func checkMBTIResult() {
+        guard let energy = inputMBTIEneryValueChanged.value,
+           let perception = inputMBTIPerceptionValueChanged.value,
+           let judgment = inputMBTIJudgmentValueChanged.value,
+           let lifeStyle = inputMBTILifeStyleValueChanged.value
+        else {
+            inputMBTIResultValueChaned.send(nil)
+            return
+        }
+        let result = [ energy, perception, judgment, lifeStyle ]
+        inputMBTIResultValueChaned.send(result)
     }
 }
