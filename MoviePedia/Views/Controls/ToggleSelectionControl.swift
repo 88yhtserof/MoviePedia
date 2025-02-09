@@ -25,6 +25,16 @@ class ToggleSelectionControl: UIControl {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    @objc func buttonTapped(_ sender: UIButton) {
+        guard sender.isSelected else { return }
+        
+        if sender == firstButton {
+            secondButton.isSelected = false
+        } else {
+            firstButton.isSelected = false
+        }
+    }
 }
 
 private extension ToggleSelectionControl {
@@ -33,6 +43,9 @@ private extension ToggleSelectionControl {
         stackView.axis = .vertical
         stackView.spacing = 8
         stackView.distribution = .fillEqually
+        
+        firstButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        secondButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
     }
     
     func configureHierarchy() {
