@@ -49,13 +49,13 @@ final class ProfileNicknameEditViewController: BaseViewController {
     
     private func bind() {
         
-        viewModel.outputProfileImageName.lazyBind { [weak self] profileImageName in
+        viewModel.output.profileImageName.lazyBind { [weak self] profileImageName in
             print("outputProfileImageName bind: \(profileImageName)")
             guard let self else { return }
             self.profileImageControl.image = UIImage(named: profileImageName)
         }
         
-        viewModel.outputNicknameValidationResult.lazyBind { [weak self] result in
+        viewModel.output.nicknameValidationResult.lazyBind { [weak self] result in
             print("outputNicknameValidationResult bind: \(result)")
             guard let self else { return }
             
@@ -79,17 +79,17 @@ final class ProfileNicknameEditViewController: BaseViewController {
             }
         }
         
-        viewModel.outputDoneButtonIsEnabled.lazyBind { [weak self ] isEnabled in
+        viewModel.output.doneButtonIsEnabled.lazyBind { [weak self ] isEnabled in
             self?.doneButton.isUserInteractionEnabled = isEnabled
         }
         
-        viewModel.outProfileInfoSaveResult.lazyBind { [weak self] result in
+        viewModel.output.profileInfoSaveResult.lazyBind { [weak self] result in
             guard let self, let result else { return }
             saveProfileHandler?(result)
             dismiss(animated: true)
         }
         
-        viewModel.inputViewDidLoad.send()
+        viewModel.input.viewDidLoad.send()
     }
     
     @objc func dismissBarButtonItemTapped() {
@@ -97,28 +97,28 @@ final class ProfileNicknameEditViewController: BaseViewController {
     }
     
     @objc func saveBarButtonItemTapped() {
-        viewModel.inputSaveProfileInfo.send()
+        viewModel.input.saveProfileInfo.send()
     }
     
     @objc func profileImageControlDidTapped() {
-        let profileImageNumber = viewModel.outputProfileImageNumber.value
+        let profileImageNumber = viewModel.output.profileImageNumber.value
         let profileImageEditVC = ProfileImageEditViewController()
-        profileImageEditVC.viewModel.inputProfileImageNumber.send(profileImageNumber)
-        profileImageEditVC.viewModel.outputSendProfileImageNumber.lazyBind{ [weak self] number in
+        profileImageEditVC.viewModel.input.profileImageNumber.send(profileImageNumber)
+        profileImageEditVC.viewModel.output.sendProfileImageNumber.lazyBind{ [weak self] number in
             print("outputSendProfileImageNumber bind")
             guard let self else { return }
-            self.viewModel.inputProfileImageNumber.send(number)
+            self.viewModel.input.profileImageNumber.send(number)
             
         }
         self.navigationController?.pushViewController(profileImageEditVC, animated: true)
     }
     
     @objc func nicknameTextFieldEditingChanged(_ sender: UITextField) {
-        viewModel.inputEditingChangedNickname.send(sender.text)
+        viewModel.input.editingChangedNickname.send(sender.text)
     }
     
     @objc func doneButtonDidTapped() {
-        viewModel.inputSaveProfileInfo.send()
+        viewModel.input.saveProfileInfo.send()
         UserDefaultsManager.isOnboardingNotNeeded = true
         
         let mainVC = MainTabBarViewController()
@@ -130,13 +130,13 @@ final class ProfileNicknameEditViewController: BaseViewController {
         
         switch sender.tag {
         case 0:
-            viewModel.inputMBTIEneryValueChanged.send(button.selectedValue)
+            viewModel.input.mbtiEneryValueChanged.send(button.selectedValue)
         case 1:
-            viewModel.inputMBTIPerceptionValueChanged.send(button.selectedValue)
+            viewModel.input.mbtiPerceptionValueChanged.send(button.selectedValue)
         case 2:
-            viewModel.inputMBTIJudgmentValueChanged.send(button.selectedValue)
+            viewModel.input.mbtiJudgmentValueChanged.send(button.selectedValue)
         case 3:
-            viewModel.inputMBTILifeStyleValueChanged.send(button.selectedValue)
+            viewModel.input.mbtiLifeStyleValueChanged.send(button.selectedValue)
         default:
             break
         }

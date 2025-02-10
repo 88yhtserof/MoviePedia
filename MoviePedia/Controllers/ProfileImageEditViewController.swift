@@ -48,15 +48,15 @@ final class ProfileImageEditViewController: BaseViewController {
     
     private func bind() {
         
-        viewModel.inputViewDidLoad.send()
+        viewModel.input.viewDidLoad.send()
         
-        viewModel.outputProfileImageName.bind { [weak self] profileImageName in
+        viewModel.output.profileImageName.bind { [weak self] profileImageName in
             print("outputProfileImageName bind: \(profileImageName)")
             guard let self else { return }
             self.profileImageControl.image = UIImage(named: profileImageName)
         }
         
-        viewModel.outputInitSelectedProfileImageItem.bind { [weak self] profileImageNumber in
+        viewModel.output.initSelectedProfileImageItem.bind { [weak self] profileImageNumber in
             print("outputInitSelectedProfileImageItem bind: \(profileImageNumber)")
             guard let self else { return }
             let selectedItem = IndexPath(item: profileImageNumber, section: 0)
@@ -72,7 +72,7 @@ private extension ProfileImageEditViewController {
         
         backBarButtonItemAction = { [weak self] in
             guard let self else { return }
-            self.viewModel.inputPopPreviousVC.send()
+            self.viewModel.input.popPreviousVC.send()
         }
         
         collectionView.isScrollEnabled = false
@@ -157,6 +157,6 @@ extension ProfileImageEditViewController: UICollectionViewDelegate {
             return
         }
         selectedCell.isSelected.toggle()
-        viewModel.inputProfileImageNumber.send(indexPath.item)
+        viewModel.input.profileImageNumber.send(indexPath.item)
     }
 }

@@ -16,18 +16,23 @@ import Foundation
  로직 4) 전달 버튼 선택 시 선택된 프로필 이미지 아이템 전달
  */
 
-final class ProfileImageEditViewModel {
+final class ProfileImageEditViewModel: BaseViewModel {
     
-    // IN
-    let inputProfileImageNumber: Observable<Int> = Observable(0)
-    let inputViewDidLoad: Observable<Void> = Observable(())
-    let inputPopPreviousVC: Observable<Void> = Observable(())
+    private(set) var input: Input
+    private(set) var output: Output
     
-    // OUT
-    let outputInitSelectedProfileImageItem: Observable<Int> = Observable(0)
-    let outputProfileImageName: Observable<String> = Observable("")
-    let outputProfileImageNumbe: Observable<Int> = Observable(0)
-    let outputSendProfileImageNumber: Observable<Int> = Observable(0)
+    struct Input {
+        let profileImageNumber: Observable<Int> = Observable(0)
+        let viewDidLoad: Observable<Void> = Observable(())
+        let popPreviousVC: Observable<Void> = Observable(())
+    }
+    
+    struct Output {
+        let initSelectedProfileImageItem: Observable<Int> = Observable(0)
+        let profileImageName: Observable<String> = Observable("")
+        let profileImageNumbe: Observable<Int> = Observable(0)
+        let sendProfileImageNumber: Observable<Int> = Observable(0)
+    }
     
     // DATA
     private var profileImageNumber: Int = 0
@@ -36,23 +41,30 @@ final class ProfileImageEditViewModel {
     init() {
         print("ProfileImageEditViewModel init")
         
-        inputProfileImageNumber.lazyBind { [weak self] number in
+        input = Input()
+        output = Output()
+        
+        transform()
+    }
+    
+    func transform() {
+        input.profileImageNumber.lazyBind { [weak self] number in
             print("inputProfileImageNumber bind")
             guard let self else { return }
             self.profileImageNumber = number
             self.configureProfileImageName(at: number)
         }
         
-        inputViewDidLoad.lazyBind { [weak self] _ in
+        input.viewDidLoad.lazyBind { [weak self] _ in
             print("inputViewDidLoad bind")
             guard let self else { return }
-            self.outputInitSelectedProfileImageItem.send(self.profileImageNumber)
+            self.output.initSelectedProfileImageItem.send(self.profileImageNumber)
         }
         
-        inputPopPreviousVC.lazyBind { [weak self] _ in
+        input.popPreviousVC.lazyBind { [weak self] _ in
             print("inputPopPreviousVC bind")
             guard let self else { return }
-            self.outputSendProfileImageNumber.send(self.profileImageNumber)
+            self.output.sendProfileImageNumber.send(self.profileImageNumber)
         }
     }
     
@@ -70,7 +82,7 @@ private extension ProfileImageEditViewModel {
     
     func configureProfileImageName(at profileImageNumber: Int) {
         let profileImageName = profileImageName(at: profileImageNumber)
-        self.outputProfileImageName.send(profileImageName)
+        self.output.profileImageName.send(profileImageName)
         // outputProfileImageNamet이 아직 정의되어 있지 않아 value를 보내도 클로저가 응답하지 않음, 따라서 초기값을 가지고 있다가 이후 클로저가 구성되면 호출된다. 따라서 outputProfileImageName는 lazy하게 정의 되면 안 된다.
         // outputProfileImageNumber도 동일
     }
