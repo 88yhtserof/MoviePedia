@@ -7,60 +7,71 @@
 
 import Foundation
 
-final class ProfileNicknameEditViewModel {
+final class ProfileNicknameEditViewModel: BaseViewModel {
     
-    // IN
-    let inputViewDidLoad: Observable<Void> = Observable(())
-    let inputProfileImageNumber: Observable<Int> = Observable(0)
-    let inputEditingChangedNickname: Observable<String?> = Observable(nil)
-    let inputNicknameResult: Observable<String?> = Observable(nil)
-    let inputMBTIResultValueChaned: Observable<[String]?> = Observable(nil)
-    let inputSaveProfileInfo: Observable<Void> = Observable(())
+    private(set) var input: Input
+    private(set) var output: Output
     
-    let inputMBTIEneryValueChanged: Observable<String?> = Observable(nil)
-    let inputMBTIPerceptionValueChanged: Observable<String?> = Observable(nil)
-    let inputMBTIJudgmentValueChanged: Observable<String?> = Observable(nil)
-    let inputMBTILifeStyleValueChanged: Observable<String?> = Observable(nil)
+    struct Input {
+        let viewDidLoad: Observable<Void> = Observable(())
+        let profileImageNumber: Observable<Int> = Observable(0)
+        let editingChangedNickname: Observable<String?> = Observable(nil)
+        let nicknameResult: Observable<String?> = Observable(nil)
+        let mbtiResultValueChaned: Observable<[String]?> = Observable(nil)
+        let saveProfileInfo: Observable<Void> = Observable(())
+        
+        let mbtiEneryValueChanged: Observable<String?> = Observable(nil)
+        let mbtiPerceptionValueChanged: Observable<String?> = Observable(nil)
+        let mbtiJudgmentValueChanged: Observable<String?> = Observable(nil)
+        let mbtiLifeStyleValueChanged: Observable<String?> = Observable(nil)
+    }
     
-    // OUT
-    let outputProfileImageName: Observable<String> = Observable("")
-    let outputProfileImageNumber: Observable<Int> = Observable(0)
-    let outputNicknameValidationResult: Observable<ValidationResult> = Observable(.success(""))
-    let outputDoneButtonIsEnabled: Observable<Bool> = Observable(false)
-    let outProfileInfoSaveResult: Observable<User?> = Observable(nil)
+    struct Output {
+        let profileImageName: Observable<String> = Observable("")
+        let profileImageNumber: Observable<Int> = Observable(0)
+        let nicknameValidationResult: Observable<ValidationResult> = Observable(.success(""))
+        let doneButtonIsEnabled: Observable<Bool> = Observable(false)
+        let profileInfoSaveResult: Observable<User?> = Observable(nil)
+    }
     
     // DATA
     private let nicknameValidator = NicknameValidator()
-//    private var nickname: String?
     
     init() {
         print("ProfileNicknameEditViewModel init")
         
-        inputViewDidLoad.lazyBind { [weak self] _ in
+        input = Input()
+        output = Output()
+        
+        transform()
+    }
+    
+    func transform() {
+        input.viewDidLoad.lazyBind { [weak self] _ in
             print("inputViewDidLoad bind")
             guard let self else { return }
             let number = (0...11).randomElement()!
-            self.outputProfileImageNumber.send(number)
+            self.output.profileImageNumber.send(number)
             self.configureProfileImageName(at: number)
         }
         
-        inputProfileImageNumber.lazyBind { [weak self] number in
+        input.profileImageNumber.lazyBind { [weak self] number in
             print("inputProfileImageNumber bind")
             guard let self else { return }
-            self.outputProfileImageNumber.send(number)
+            self.output.profileImageNumber.send(number)
             self.configureProfileImageName(at: number)
         }
         
-        inputEditingChangedNickname.lazyBind { [weak self] text in
+        input.editingChangedNickname.lazyBind { [weak self] text in
             print("inputEditingChangedNickname bind")
             guard let self else { return }
             self.validateNickname(text)
         }
         
-        [ inputMBTIEneryValueChanged,
-          inputMBTIPerceptionValueChanged,
-          inputMBTIJudgmentValueChanged,
-          inputMBTILifeStyleValueChanged ]
+        [ input.mbtiEneryValueChanged,
+          input.mbtiPerceptionValueChanged,
+          input.mbtiJudgmentValueChanged,
+          input.mbtiLifeStyleValueChanged ]
             .forEach {
                 $0.lazyBind { [weak self] _ in
                     print("inputMBTIXXXValueChaned bind")
@@ -68,21 +79,20 @@ final class ProfileNicknameEditViewModel {
                 }
             }
         
-        inputMBTIResultValueChaned.lazyBind { [weak self] result in
+        input.mbtiResultValueChaned.lazyBind { [weak self] result in
             print("inputMBTIResultValueChanged bind", result)
             self?.checkDoneButtonStatus()
         }
         
-        inputNicknameResult.lazyBind { [weak self] result in
+        input.nicknameResult.lazyBind { [weak self] result in
             print("inputNicknameResult bind", result)
             self?.checkDoneButtonStatus()
         }
         
-        inputSaveProfileInfo.lazyBind { [weak self] _ in
+        input.saveProfileInfo.lazyBind { [weak self] _ in
             print("inputSaveProfileInfo bind")
             self?.saveProfileData()
         }
-        
     }
     
     deinit {
@@ -94,7 +104,7 @@ private extension ProfileNicknameEditViewModel {
     
     func configureProfileImageName(at number: Int) {
         let imageName = String(format: "profile_%d", number)
-        outputProfileImageName.send(imageName)
+        output.profileImageName.send(imageName)
     }
     
     func validateNickname(_ text: String?) {
@@ -102,45 +112,45 @@ private extension ProfileNicknameEditViewModel {
         
         do {
             let nickname = try self.nicknameValidator.validateNickname(of: text)
-            self.outputNicknameValidationResult.send(.success("사용할 수 있는 닉네임이에요"))
-            self.inputNicknameResult.send(nickname)
+            self.output.nicknameValidationResult.send(.success("사용할 수 있는 닉네임이에요"))
+            self.input.nicknameResult.send(nickname)
             
         } catch let error as NicknameValidator.ValidationError {
-            self.outputNicknameValidationResult.send(.failure(error))
-            self.inputNicknameResult.send(nil)
+            self.output.nicknameValidationResult.send(.failure(error))
+            self.input.nicknameResult.send(nil)
         } catch {
             print("Unexpected error: \(error)")
         }
     }
     
     func checkMBTIResult() {
-        guard let energy = inputMBTIEneryValueChanged.value,
-           let perception = inputMBTIPerceptionValueChanged.value,
-           let judgment = inputMBTIJudgmentValueChanged.value,
-           let lifeStyle = inputMBTILifeStyleValueChanged.value
+        guard let energy = input.mbtiEneryValueChanged.value,
+           let perception = input.mbtiPerceptionValueChanged.value,
+           let judgment = input.mbtiJudgmentValueChanged.value,
+           let lifeStyle = input.mbtiLifeStyleValueChanged.value
         else {
-            inputMBTIResultValueChaned.send(nil)
+            input.mbtiResultValueChaned.send(nil)
             return
         }
         let result = [ energy, perception, judgment, lifeStyle ]
-        inputMBTIResultValueChaned.send(result)
+        input.mbtiResultValueChaned.send(result)
     }
     
     func checkDoneButtonStatus() {
-        guard inputNicknameResult.value != nil,
-              inputMBTIResultValueChaned.value != nil
+        guard input.nicknameResult.value != nil,
+              input.mbtiResultValueChaned.value != nil
         else {
-            outputDoneButtonIsEnabled.send(false)
+            output.doneButtonIsEnabled.send(false)
             return
         }
-        outputDoneButtonIsEnabled.send(true)
+        output.doneButtonIsEnabled.send(true)
     }
     
     private func saveProfileData() {
-        guard let nickname = inputNicknameResult.value else { return }
-        let profileImageName = outputProfileImageName.value
+        guard let nickname = input.nicknameResult.value else { return }
+        let profileImageName = output.profileImageName.value
         let user = User(createdAt: Date(), nickname: nickname, profileImage: profileImageName)
         UserDefaultsManager.user = user
-        outProfileInfoSaveResult.send(user)
+        output.profileInfoSaveResult.send(user)
     }
 }
