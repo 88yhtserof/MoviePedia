@@ -220,12 +220,8 @@ extension MovieSearchViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-//        guard let searchWord = searchBar.text,
-//              let totalPage else { return }
-//        
-//        if currentPage <= totalPage && indexPath.item == (movies.count - 2) {
-//            loadSearchResults(query: searchWord, isInitial: false)
-//        }
+        guard let searchWord = searchBar.text else { return }
+        viewModel.input.willDisplaySearchList.send((searchWord, indexPath.item))
     }
 }
 

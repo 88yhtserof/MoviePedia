@@ -16,6 +16,7 @@ final class MovieSearchViewModel: BaseViewModel {
         let receiveSearchWord: Observable<String?> = Observable(nil)
         let viewDidLoad: Observable<Void> = Observable(())
         let search: Observable<String?> = Observable(nil)
+        let willDisplaySearchList: Observable<(String, Int)?> = Observable(nil)
     }
     
     struct Output {
@@ -63,6 +64,13 @@ final class MovieSearchViewModel: BaseViewModel {
             guard let self, let searchWord else { return }
             self.loadSearchResults(query: searchWord, isInitial: true)
         }
+        
+        input.willDisplaySearchList.lazyBind { [weak self] paginationInfo in
+            print("Input WillDisplaySearchList bind")
+            guard let self,
+                  let (searchWord, index) = paginationInfo else { return }
+            self.pagonationSearchResults(searchWord, index)
+        }
     }
 }
 
@@ -88,6 +96,13 @@ private extension MovieSearchViewModel {
         } failureHandler: { error in
             self.output.showErrorAlert.send(error.localizedDescription)
         }
-
+    }
+    
+    func pagonationSearchResults(_ searchWord: String, _ index: Int) {
+        guard let totalPage else { return }
+        
+        if currentPage <= totalPage && index == (movies.count - 2) {
+            loadSearchResults(query: searchWord, isInitial: false)
+        }
     }
 }
