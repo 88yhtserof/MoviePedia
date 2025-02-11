@@ -10,7 +10,7 @@ import SnapKit
 
 class ProfileViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(user: user, likedMoviesCount: likedMovies.count)
+    private lazy var profileInfoView = ProfileInfoView(likedMoviesCount: likedMovies.count)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     
     private var dataSource: DataSource!

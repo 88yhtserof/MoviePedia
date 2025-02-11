@@ -20,6 +20,7 @@ final class CinemaViewModel: BaseViewModel {
         let showErrorAlert: Observable<String> = Observable("")
         let updateTodayMovieSnapshot: Observable<[Movie]?> = Observable(nil)
         let updateRecentSearchSnapshot: Observable<[RecentSearch]?> = Observable(nil)
+        let updateUser: Observable<User?> = Observable(nil)
     }
     
     // Data
@@ -45,6 +46,7 @@ final class CinemaViewModel: BaseViewModel {
             guard let self else { return }
             self.loadTodayMovies()
             self.getRecentSearches()
+            self.getUser()
         }
     }
 }
@@ -64,5 +66,10 @@ private extension CinemaViewModel {
         let recentSearches = UserDefaultsManager.recentSearches
         let array = Array(recentSearches)
         self.output.updateRecentSearchSnapshot.send(array)
+    }
+    
+    func getUser() {
+        let user = UserDefaultsManager.user
+        self.output.updateUser.send(user)
     }
 }

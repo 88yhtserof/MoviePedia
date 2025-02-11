@@ -17,16 +17,17 @@ class ProfileInfoView: UIView {
     let profileControlView = UIControl()
     private let movieBoxButton = UIButton()
     
-    var user: User {
+    var user: User? {
         didSet {
+            guard let user else { return }
             profileImageControl.image = UIImage(named: user.profileImage)
-            updateUserNickname()
+            updateUserInfoButton(user)
+            updateUserNickname(user)
         }
     }
     private let likedMoviesCount: Int
     
-    init(user: User, likedMoviesCount: Int) {
-        self.user = user
+    init(likedMoviesCount: Int) {
         self.likedMoviesCount = likedMoviesCount
         super.init(frame: .zero)
         
@@ -45,10 +46,20 @@ class ProfileInfoView: UIView {
         movieBoxButton.configuration = config
     }
     
-    func updateUserNickname() {
+    func updateUserNickname(_ user: User) {
         var config = userInfoButton.configuration!
         let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
         config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
+        userInfoButton.configuration = config
+    }
+    
+    func updateUserInfoButton(_ user: User) {
+        var config = UIButton.Configuration.plain()
+        let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
+        let attributedSubtitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 12, weight: .light), .foregroundColor: UIColor.moviepedia_tagbackground])
+        let dateStr = String(format: "%@ 가입", DateFormatterManager.shared.string(from: user.createdAt, format: .userCreatedAt))
+        config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
+        config.attributedSubtitle = AttributedString(dateStr, attributes: attributedSubtitleContainer)
         userInfoButton.configuration = config
     }
 }
@@ -59,16 +70,8 @@ private extension ProfileInfoView {
         backgroundView.cornerRadius()
         backgroundView.backgroundColor = .moviepedia_subbackground
         
-        profileImageControl.image = UIImage(named: user.profileImage)
         profileImageControl.isUserInteractionEnabled = false
         
-        var config = UIButton.Configuration.plain()
-        let attributedTitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 16, weight: .heavy), .foregroundColor: UIColor.moviepedia_foreground])
-        let attributedSubtitleContainer = AttributeContainer([.font: UIFont.systemFont(ofSize: 12, weight: .light), .foregroundColor: UIColor.moviepedia_tagbackground])
-        let dateStr = String(format: "%@ 가입", DateFormatterManager.shared.string(from: user.createdAt, format: .userCreatedAt))
-        config.attributedTitle = AttributedString(user.nickname, attributes: attributedTitleContainer)
-        config.attributedSubtitle = AttributedString(dateStr, attributes: attributedSubtitleContainer)
-        userInfoButton.configuration = config
         userInfoButton.isUserInteractionEnabled = false
         
         let image = UIImage(systemName: "chevron.right")

@@ -10,14 +10,13 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(user: user, likedMoviesCount: likedMovies.count)
+    private lazy var profileInfoView = ProfileInfoView(likedMoviesCount: likedMovies.count)
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var user: User { UserDefaultsManager.user! }
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
 //    private var recentSearches: Set<RecentSearch> {
 //        get {
@@ -56,27 +55,32 @@ final class CinemaViewController: BaseViewController {
             self.updateRecentSearchSectionSnapshot(items: recentSearches)
         }
         
+        viewModel.output.updateUser.lazyBind { [weak self] user in
+            print("Out updateUser bind")
+            guard let self, let user else { return }
+            profileInfoView.user = user
+        }
+        
         viewModel.input.viewDidLoad.send()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        profileInfoView.user = user
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
     
-    @objc func presentProfileEditVC() {
-        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
-        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
-        if let sheet = profileNicknameEditNC.sheetPresentationController {
-            sheet.detents = [.large()]
-            sheet.prefersGrabberVisible = true
-        }
-        profileNicknameEditVC.saveProfileHandler = { user in
-            self.profileInfoView.user = user
-        }
-        present(profileNicknameEditNC, animated: true)
-    }
+//    @objc func presentProfileEditVC() {
+//        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
+//        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
+//        if let sheet = profileNicknameEditNC.sheetPresentationController {
+//            sheet.detents = [.large()]
+//            sheet.prefersGrabberVisible = true
+//        }
+//        profileNicknameEditVC.saveProfileHandler = { user in
+//            self.profileInfoView.user = user
+//        }
+//        present(profileNicknameEditNC, animated: true)
+//    }
     
     @objc func removeAllRecentSearches() {
         UserDefaultsManager.recentSearches = []
@@ -130,7 +134,7 @@ private extension CinemaViewController {
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
-        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
+//        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.isScrollEnabled = false
@@ -306,11 +310,6 @@ extension CinemaViewController {
     func createSnapshot() {
         snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
-        
-//        updateRecentSearchSectionSnapshot()
-//        updateTodayMovieSectionSnapshot(items: movies)
-        
-//        dataSource.apply(snapshot)
     }
     
     func updateRecentSearchSectionSnapshot(items recentSearches: [RecentSearch]) {
