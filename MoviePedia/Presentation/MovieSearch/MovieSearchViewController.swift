@@ -16,15 +16,13 @@ final class MovieSearchViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private let networkManager = TMDBNetworkManager.shared
-    private var movies: [Movie] = []
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    private var currentPage: Int = 1
-    private var totalPage: Int?
     private var currentSearchWord: String?
     private let recenteSearchedWord: String?
     
     var likeButtonSelected: ((Bool, Int) -> Void)?
+    
+    let viewModel = MovieSearchViewModel()
     
     init(searchWord: String? = nil) {
         recenteSearchedWord = searchWord
@@ -42,11 +40,27 @@ final class MovieSearchViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
+        bind()
+    }
+    
+    private func bind() {
         
-        if let recenteSearchedWord {
-            searchBar.text = recenteSearchedWord
-            loadSearchResults(query: recenteSearchedWord)
+        viewModel.output.showErrorAlert.lazyBind { [weak self] errorMessage in
+            guard let self, let errorMessage else { return }
+            self.showErrorAlert(message: errorMessage)
         }
+        
+        viewModel.output.updateInitialSnapshot.lazyBind { [weak self] movies in
+            guard let self, let movies else { return }
+            self.updateInitialSnapshot(movies)
+        }
+        
+        viewModel.output.updatePagibleSnapshot.lazyBind { [weak self] newMovies in
+            guard let self, let newMovies else { return }
+            self.updatePagibleSnapshot(newMovies)
+        }
+        
+        viewModel.input.viewDidLoad.send()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -56,28 +70,6 @@ final class MovieSearchViewController: BaseViewController {
                 self.searchBar.becomeFirstResponder()
             }
         }
-    }
-    
-    private func loadSearchResults(query: String, isInitial: Bool = true) {
-        if isInitial {
-            currentPage = 1
-            movies = []
-        }
-        
-        let request = SearchRequest(query: query, page: currentPage)
-        networkManager.request(api: .search(request)) { (value: MovieResponse) in
-            self.currentPage += 1
-            self.totalPage = value.total_pages
-            self.movies.append(contentsOf: value.results)
-            if isInitial {
-                self.createSnapshot()
-            } else {
-                self.updateSnapshot(newItems:value.results, after: self.movies.count)
-            }
-        } failureHandler: { error in
-            self.showErrorAlert(message: error.localizedDescription)
-        }
-
     }
     
     private func updateRecentResults(_ recentSearch: RecentSearch) {
@@ -90,14 +82,14 @@ final class MovieSearchViewController: BaseViewController {
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-        guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
+//        guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
         
-        if sender.isSelected {
-            UserDefaultsManager.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-        }
-        likeButtonSelected?(sender.isSelected, movie.id)
+//        if sender.isSelected {
+//            UserDefaultsManager.likedMovies.append(movie)
+//        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+//            UserDefaultsManager.likedMovies.remove(at: removeIndex)
+//        }
+//        likeButtonSelected?(sender.isSelected, movie.id)
     }
 }
 
@@ -133,15 +125,12 @@ private extension MovieSearchViewController {
         let searchResultsCellRegisteration = UICollectionView.CellRegistration(handler: searchResultCellRegistrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            guard let section = Section(rawValue: indexPath.section) else {
-                fatalError("Unknown Section")
-            }
             
-            switch section {
-            case .empty:
-                return collectionView.dequeueConfiguredReusableCell(using: emptyCellRegisteration, for: indexPath, item: itemIdentifier.empty)
-            case .searchResults:
-                return collectionView.dequeueConfiguredReusableCell(using: searchResultsCellRegisteration, for: indexPath, item: itemIdentifier.movie)
+            switch itemIdentifier {
+            case .empty(let item):
+                return collectionView.dequeueConfiguredReusableCell(using: emptyCellRegisteration, for: indexPath, item: item)
+            case .movie(let item):
+                return collectionView.dequeueConfiguredReusableCell(using: searchResultsCellRegisteration, for: indexPath, item: item)
             }
         })
         
@@ -157,22 +146,9 @@ private extension MovieSearchViewController {
         case searchResults
     }
     
-    struct Item: Hashable {
-        let empty: String?
-        let movie: MovieInfo?
-        
-        private init(empty: String?, movie: MovieInfo?) {
-            self.empty = empty
-            self.movie = movie
-        }
-        
-        init(empty: String) {
-            self.init(empty: empty, movie: nil)
-        }
-        
-        init(movie: MovieInfo) {
-            self.init(empty: nil, movie: movie)
-        }
+    enum Item: Hashable {
+        case empty(String)
+        case movie(MovieInfo)
     }
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
@@ -190,26 +166,36 @@ private extension MovieSearchViewController {
     func createSnapshot() {
         snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
-        
-        if movies.isEmpty {
-            let items = [Item(empty: "원하는 검색결과를 찾지 못했습니다")]
-            snapshot.appendItems(items, toSection: .empty)
-        } else {
-            let items = movies.map{ movie in
-                let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-                let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-                return Item(movie: movieInfo)
-            }
-            snapshot.appendItems(items, toSection: .searchResults)
-        }
-        dataSource.apply(snapshot)
     }
     
-    func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
+    func updateInitialSnapshot(_ movies: [Movie]) {
+        let exsitingMovies = snapshot.itemIdentifiers
+        snapshot.deleteItems(exsitingMovies)
+        
+        if movies.isEmpty {
+            let items = [Item.empty("원하는 검색결과를 찾지 못했습니다")]
+            snapshot.appendItems(items, toSection: .empty)
+            dataSource.apply(snapshot)
+        } else {
+            updatePagibleSnapshot(movies)
+        }
+    }
+    
+    func updatePagibleSnapshot(_ newMovies: [Movie]) {
         let items = newMovies.map{ movie in
             let isLiked = likedMovies.contains(where: { $0.id == movie.id })
             let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item(movie: movieInfo)
+            return Item.movie(movieInfo)
+        }
+        snapshot.appendItems(items, toSection: .searchResults)
+        dataSource.apply(snapshot)
+    }
+    
+    func updateSnapshot1(newItems newMovies: [Movie], after index: Int) {
+        let items = newMovies.map{ movie in
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+            return Item.movie(movieInfo)
         }
         guard let afterItem = snapshot.itemIdentifiers(inSection: .searchResults).last else { return }
         snapshot.insertItems(items, afterItem: afterItem)
@@ -221,25 +207,25 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard indexPath.section == 1 else { return }
-        let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
-        movieDetailVC.likeButtonSelected = { (isLiked) in
-            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
-                print("Could not find cell")
-                return
-            }
-            cell.likeButton.isSelected = isLiked
-        }
-        navigationController?.pushViewController(movieDetailVC, animated: true)
+//        guard indexPath.section == 1 else { return }
+//        let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
+//        movieDetailVC.likeButtonSelected = { (isLiked) in
+//            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
+//                print("Could not find cell")
+//                return
+//            }
+//            cell.likeButton.isSelected = isLiked
+//        }
+//        navigationController?.pushViewController(movieDetailVC, animated: true)
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let searchWord = searchBar.text,
-              let totalPage else { return }
-        
-        if currentPage <= totalPage && indexPath.item == (movies.count - 2) {
-            loadSearchResults(query: searchWord, isInitial: false)
-        }
+//        guard let searchWord = searchBar.text,
+//              let totalPage else { return }
+//        
+//        if currentPage <= totalPage && indexPath.item == (movies.count - 2) {
+//            loadSearchResults(query: searchWord, isInitial: false)
+//        }
     }
 }
 
@@ -288,7 +274,7 @@ extension MovieSearchViewController: UISearchBarDelegate {
         view.endEditing(true)
         guard let query = searchBar.text, currentSearchWord != query else { return }
         currentSearchWord = query
-        loadSearchResults(query: query)
+        viewModel.input.search.send(query)
         let recentSearch = RecentSearch(search: query, date: Date())
         updateRecentResults(recentSearch)
     }
