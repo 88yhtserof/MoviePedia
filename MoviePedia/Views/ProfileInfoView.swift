@@ -25,10 +25,8 @@ class ProfileInfoView: UIView {
             updateUserNickname(user)
         }
     }
-    private let likedMoviesCount: Int
     
-    init(likedMoviesCount: Int) {
-        self.likedMoviesCount = likedMoviesCount
+    init() {
         super.init(frame: .zero)
         
         configureViews()
@@ -42,7 +40,7 @@ class ProfileInfoView: UIView {
     
     func updateLikedMoviesCount(_ count: Int) {
         var config = movieBoxButton.configuration
-        config?.title = String(format: "%d개인 무비박스 보관 중", count)
+        config?.title = String(format: "%d 개인 무비박스 보관 중", count)
         movieBoxButton.configuration = config
     }
     
@@ -79,7 +77,6 @@ private extension ProfileInfoView {
         chevronButton.tintColor = .moviepedia_tagbackground
         
         var movieBoxConfig = UIButton.Configuration.filled()
-        movieBoxConfig.title = String(format: "%d개인 무비박스 보관 중", likedMoviesCount)
         movieBoxConfig.baseForegroundColor = .moviepedia_foreground
         movieBoxConfig.baseBackgroundColor = .moviepedia_point
         movieBoxConfig.background.cornerRadius = 10

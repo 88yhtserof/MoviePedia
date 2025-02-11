@@ -10,14 +10,13 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(likedMoviesCount: likedMovies.count)
+    private lazy var profileInfoView = ProfileInfoView()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
 //    private var recentSearches: Set<RecentSearch> {
 //        get {
 //            UserDefaultsManager.recentSearches
@@ -26,7 +25,7 @@ final class CinemaViewController: BaseViewController {
 //            UserDefaultsManager.recentSearches = newValue
 //        }
 //    }
-    private var todayMovies: [Movie] = []
+    
     private var isUpdatingTodayMovieNeeded: Bool = false
     
     let viewModel = CinemaViewModel()
@@ -61,12 +60,13 @@ final class CinemaViewController: BaseViewController {
             profileInfoView.user = user
         }
         
+        viewModel.output.updateLikedMoviesCount.lazyBind { [weak self] likedMoviesCount in
+            print("Out updateLikeMoviesCount bind")
+            guard let self, let likedMoviesCount else { return }
+            self.profileInfoView.updateLikedMoviesCount(likedMoviesCount)
+        }
+        
         viewModel.input.viewDidLoad.send()
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        profileInfoView.updateLikedMoviesCount(likedMovies.count)
     }
     
 //    @objc func presentProfileEditVC() {
@@ -88,17 +88,8 @@ final class CinemaViewController: BaseViewController {
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
-        guard let movie = todayMovies.first(where: { $0.id == sender.tag }) else {
-            print("Could not find movie")
-            return
-        }
-        
-        if sender.isSelected {
-            UserDefaultsManager.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-        }
-        profileInfoView.updateLikedMoviesCount(likedMovies.count)
+        let likedResult = (sender.tag, sender.isSelected)
+        viewModel.input.didLikedButtonTapped.send(likedResult)
     }
     
     @objc func searchBarButtonItemDidTapped() {
@@ -111,15 +102,15 @@ final class CinemaViewController: BaseViewController {
     
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
         let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
-        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
-            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
-            let indexPath = IndexPath(item: movieIndex, section: 2)
-            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                print("Could not find cell")
-                return
-            }
-            cell.likeButton.isSelected = isLiked
-        }
+//        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
+//            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
+//            let indexPath = IndexPath(item: movieIndex, section: 2)
+//            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+//                print("Could not find cell")
+//                return
+//            }
+//            cell.likeButton.isSelected = isLiked
+//        }
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
@@ -289,7 +280,10 @@ extension CinemaViewController {
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: MovieInfo) {
-        let movieInfo = MovieInfo(movie: item.movie, isLiked: item.isLiked)
+        guard let movieInfo = viewModel.movieInfoList?[indexPath.item] else {
+            print("Could not get movieInfo")
+            return
+        }
         cell.configure(with: movieInfo)
         cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     }
@@ -328,14 +322,9 @@ extension CinemaViewController {
         dataSource.apply(snapshot)
     }
     
-    func updateTodayMovieSectionSnapshot(items movies: [Movie]) {
-        let items = movies.map{ movie in
-            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item.todayMovie(movieInfo)
-        }
+    func updateTodayMovieSectionSnapshot(items movieInfoList: [MovieInfo]) {
+        let items = movieInfoList.map{ Item.todayMovie($0) }
         snapshot.appendItems(items, toSection: .todayMovie)
-        
         dataSource.apply(snapshot)
     }
 }
@@ -344,15 +333,15 @@ extension CinemaViewController {
 extension CinemaViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 2 {
-            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
-            movieDetailVC.likeButtonSelected = { (isLiked) in
-                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                    print("Could not find cell")
-                    return
-                }
-                cell.likeButton.isSelected = isLiked
-            }
-            navigationController?.pushViewController(movieDetailVC, animated: true)
+//            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
+//            movieDetailVC.likeButtonSelected = { (isLiked) in
+//                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+//                    print("Could not find cell")
+//                    return
+//                }
+//                cell.likeButton.isSelected = isLiked
+//            }
+//            navigationController?.pushViewController(movieDetailVC, animated: true)
         }
     }
 }
