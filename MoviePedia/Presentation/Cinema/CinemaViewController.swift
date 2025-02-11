@@ -19,16 +19,18 @@ final class CinemaViewController: BaseViewController {
     
     private var user: User { UserDefaultsManager.user! }
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    private var recentSearches: Set<RecentSearch> {
-        get {
-            UserDefaultsManager.recentSearches
-        }
-        set {
-            UserDefaultsManager.recentSearches = newValue
-        }
-    }
+//    private var recentSearches: Set<RecentSearch> {
+//        get {
+//            UserDefaultsManager.recentSearches
+//        }
+//        set {
+//            UserDefaultsManager.recentSearches = newValue
+//        }
+//    }
     private var todayMovies: [Movie] = []
     private var isUpdatingTodayMovieNeeded: Bool = false
+    
+    let viewModel = CinemaViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,14 +39,30 @@ final class CinemaViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
-        loadTodayMovies()
+        bind()
+    }
+    
+    func bind() {
+        
+        viewModel.output.updateTodayMovieSnapshot.lazyBind { [weak self] movies in
+            print("Output updateTodayMovieSnapshot bind")
+            guard let self, let movies else { return }
+            self.updateTodayMovieSectionSnapshot(items: movies)
+        }
+        
+        viewModel.output.updateRecentSearchSnapshot.lazyBind { [weak self] recentSearches in
+            print("Output updateRecentSearchSnapshot bind")
+            guard let self, let recentSearches else { return }
+            self.updateRecentSearchSectionSnapshot(items: recentSearches)
+        }
+        
+        viewModel.input.viewDidLoad.send()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         profileInfoView.user = user
         profileInfoView.updateLikedMoviesCount(likedMovies.count)
-        createSnapshot()
     }
     
     @objc func presentProfileEditVC() {
@@ -85,16 +103,6 @@ final class CinemaViewController: BaseViewController {
     
     @objc func recentSearchesButtonTapped(_ sender: UIButton) {
         pushToMovieSearchVC(sender.attributedTitle(for: .normal)?.string)
-    }
-    
-    private func loadTodayMovies() {
-        let trendingRequest = TrendingRequest()
-        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
-            self.todayMovies = trending.results
-            self.createSnapshot()
-        } failureHandler: { error in
-            self.showErrorAlert(message: error.localizedDescription)
-        }
     }
     
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
@@ -152,18 +160,15 @@ private extension CinemaViewController {
         let todayMovieCellRegidtration = UICollectionView.CellRegistration(handler: todayMovieCellRegidtrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            guard let section = Section(rawValue: indexPath.section) else {
-                fatalError("Unknown Section")
-            }
             var cell: UICollectionViewCell
             
-            switch section {
-            case .emptyRecentSearch:
-                cell = collectionView.dequeueConfiguredReusableCell(using: emptyRecentSearchCellRegistration, for: indexPath, item: itemIdentifier.empty)
-            case .recentSeach:
-                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: itemIdentifier.recentSearch?.value)
-            case .todayMovie:
-                cell  = collectionView.dequeueConfiguredReusableCell(using: todayMovieCellRegidtration, for: indexPath, item: itemIdentifier.todayMovie)
+            switch itemIdentifier {
+            case .emptyRecentSearch(let items):
+                cell = collectionView.dequeueConfiguredReusableCell(using: emptyRecentSearchCellRegistration, for: indexPath, item: items)
+            case .recentSearch(let items):
+                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: items.value)
+            case .todayMovie(let items):
+                cell  = collectionView.dequeueConfiguredReusableCell(using: todayMovieCellRegidtration, for: indexPath, item: items)
             }
             
             return cell
@@ -174,6 +179,7 @@ private extension CinemaViewController {
             return collectionView.dequeueConfiguredReusableSupplementary(using: headerSupplementaryProvider, for: indexPath)
         }
         
+        createSnapshot()
         collectionView.dataSource = dataSource
     }
 }
@@ -194,7 +200,7 @@ private extension CinemaViewController {
         switch section {
         case .emptyRecentSearch:
             return sectionForEmptyRecentSearch()
-        case .recentSeach:
+        case .recentSearch:
             return sectionForRecentSearch()
         case .todayMovie:
             return sectionForTodayMovie()
@@ -251,33 +257,14 @@ private extension CinemaViewController {
 extension CinemaViewController {
     enum Section: Int, CaseIterable {
         case emptyRecentSearch
-        case recentSeach
+        case recentSearch
         case todayMovie
     }
     
-    struct Item: Hashable {
-        let empty: String?
-        let recentSearch: Identifier<RecentSearch>?
-        let todayMovie: MovieInfo?
-        
-        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: MovieInfo?) {
-            self.empty = empty
-            self.recentSearch = recentSearch != nil ? Identifier(value: recentSearch!) : nil
-            self.todayMovie = todayMovie
-        }
-        
-        init(empty: String) {
-            self.init(empty: empty, recentSearch: nil, todayMovie: nil)
-        }
-        
-        init(recentSearch: RecentSearch) {
-            self.init(empty: nil, recentSearch: recentSearch, todayMovie: nil)
-        }
-        
-        init(todayMovie: MovieInfo) {
-            self.init(empty: nil, recentSearch: nil, todayMovie: todayMovie)
-        }
-        
+    enum Item: Hashable { // 이름 정정 필요
+        case emptyRecentSearch(String)
+        case recentSearch(Identifier<RecentSearch>)
+        case todayMovie(MovieInfo)
     }
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
@@ -292,7 +279,7 @@ extension CinemaViewController {
         cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
         cell.deleteAction = { [self] in
             let deletedItem = item
-            self.recentSearches.remove(deletedItem)
+//            self.recentSearches.remove(deletedItem) output 만들기!!!
             self.createSnapshot()
         }
     }
@@ -320,26 +307,37 @@ extension CinemaViewController {
         snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
         
+//        updateRecentSearchSectionSnapshot()
+//        updateTodayMovieSectionSnapshot(items: movies)
+        
+//        dataSource.apply(snapshot)
+    }
+    
+    func updateRecentSearchSectionSnapshot(items recentSearches: [RecentSearch]) {
+        let exisitingEmptyRecentSearchItems = snapshot.itemIdentifiers(inSection: .emptyRecentSearch)
+        let existingRecentSearchItems = snapshot.itemIdentifiers(inSection: .recentSearch)
+        snapshot.deleteItems(exisitingEmptyRecentSearchItems + existingRecentSearchItems)
+        
         if recentSearches.isEmpty {
-            let items = [Item(empty: "최근 검색 내역이 없습니다.")]
+            let items = [Item.emptyRecentSearch("최근 검색 내역이 없습니다.")]
             snapshot.appendItems(items, toSection: .emptyRecentSearch)
         } else {
-            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item(recentSearch: $0) }
-            snapshot.appendItems(items, toSection: .recentSeach)
+            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item.recentSearch(Identifier(value: $0)) }
+            snapshot.appendItems(items, toSection: .recentSearch)
         }
-        
-        let items = todayMovies.map{ movie in
-            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item(todayMovie: movieInfo)
-        }
-        snapshot.appendItems(items, toSection: .todayMovie)
         
         dataSource.apply(snapshot)
     }
     
-    // TODO: - 데이터 갱신 로직 개선 후 적용
-    func updateSnapshot(for section: Section) {
+    func updateTodayMovieSectionSnapshot(items movies: [Movie]) {
+        let items = movies.map{ movie in
+            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+            return Item.todayMovie(movieInfo)
+        }
+        snapshot.appendItems(items, toSection: .todayMovie)
+        
+        dataSource.apply(snapshot)
     }
 }
 
