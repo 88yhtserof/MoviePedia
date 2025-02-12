@@ -15,7 +15,9 @@ final class CinemaViewModel: BaseViewModel {
     struct Input {
         let viewDidLoad: Observable<Void> = Observable(())
         let didLikedButtonTapped: Observable<(Int, Bool)?> = Observable(nil)
-        let pushToMovieSearchVC: Observable<(Int, Bool)?> = Observable(nil)
+        let didChangeLikeMovies: Observable<(Int, Bool)?> = Observable(nil)
+        let didChangeRecentSearches: Observable<String?> = Observable(nil)
+        let removeRecentSearch: Observable<RecentSearch?> = Observable(nil)
     }
     
     struct Output {
@@ -31,6 +33,10 @@ final class CinemaViewModel: BaseViewModel {
     var movies: [Movie]?
     var movieInfoList: [MovieInfo]?
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
+    private var recentSearches: Set<RecentSearch> {
+        get { UserDefaultsManager.recentSearches }
+        set { UserDefaultsManager.recentSearches = newValue }
+    }
     
     init() {
         print("CinemaViewModel init")
@@ -63,10 +69,22 @@ final class CinemaViewModel: BaseViewModel {
             self.handleLikedMovie(likedResult)
         }
         
-        input.pushToMovieSearchVC.lazyBind { [weak self] likedMovieInfo in
-            print("Input pushToMovieSearchVC bind")
+        input.didChangeLikeMovies.lazyBind { [weak self] likedMovieInfo in
+            print("Input didChangeLikeMovies bind")
             guard let self, let likedMovieInfo else { return }
             self.handleLikedMovieIndexPath(likedMovieInfo)
+        }
+        
+        input.didChangeRecentSearches.lazyBind { [weak self] searchWord in
+            print("Input didChangeRecentSearches bind")
+            guard let self, let searchWord else { return }
+            handleRecentSearches(searchWord)
+        }
+        
+        input.removeRecentSearch.lazyBind { [weak self] item in
+            print("Input removeRecentSearch bind")
+            guard let self, let item else { return }
+            self.removeRecentSearch(item)
         }
     }
 }
@@ -88,8 +106,7 @@ private extension CinemaViewModel {
     }
     
     func getRecentSearches() {
-        let recentSearches = UserDefaultsManager.recentSearches
-        let array = Array(recentSearches)
+        let array = Array(self.recentSearches)
         self.output.updateRecentSearchSnapshot.send(array)
     }
     
@@ -131,5 +148,23 @@ private extension CinemaViewModel {
         
         let indexPath = IndexPath(item: movieIndex, section: 2)
         output.updateCellWithLikedMovie.send((indexPath, isLiked))
+    }
+    
+    func handleRecentSearches(_ searchWord: String) {
+        let recentSearch = RecentSearch(search: searchWord, date: Date())
+        
+        if let index = recentSearches.firstIndex(where: { $0.search == recentSearch.search }) {
+            recentSearches.remove(at: index)
+        }
+        recentSearches.insert(recentSearch)
+        
+        let array = Array(recentSearches)
+        output.updateRecentSearchSnapshot.send(array)
+    }
+    
+    func removeRecentSearch(_ item: RecentSearch) {
+        recentSearches.remove(item)
+        let array = Array(recentSearches)
+        output.updateRecentSearchSnapshot.send(array)
     }
 }

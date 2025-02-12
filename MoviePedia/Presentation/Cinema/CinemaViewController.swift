@@ -17,15 +17,6 @@ final class CinemaViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-//    private var recentSearches: Set<RecentSearch> {
-//        get {
-//            UserDefaultsManager.recentSearches
-//        }
-//        set {
-//            UserDefaultsManager.recentSearches = newValue
-//        }
-//    }
-    
     private var isUpdatingTodayMovieNeeded: Bool = false
     
     let viewModel = CinemaViewModel()
@@ -113,10 +104,17 @@ final class CinemaViewController: BaseViewController {
         movieSearchVC.viewModel.input.receiveSearchWord.send(searchWord)
         
         movieSearchVC.viewModel.output.updateLikedMovies.lazyBind { [weak self] likedMovieInfo in
-            guard let self else { return }
             print("Output updateLikedMovies bind")
-            self.viewModel.input.pushToMovieSearchVC.send(likedMovieInfo)
+            guard let self else { return }
+            self.viewModel.input.didChangeLikeMovies.send(likedMovieInfo)
         }
+        
+        movieSearchVC.viewModel.output.updateRecentSearches.lazyBind { [weak self] searchWord in
+            print("Output updateRecentSearches bind")
+            guard let self else { return }
+            self.viewModel.input.didChangeRecentSearches.send(searchWord)
+        }
+        
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
@@ -279,9 +277,7 @@ extension CinemaViewController {
         cell.configure(with: item.search)
         cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
         cell.deleteAction = { [self] in
-            let deletedItem = item
-//            self.recentSearches.remove(deletedItem) output 만들기!!!
-            self.createSnapshot()
+            viewModel.input.removeRecentSearch.send(item)
         }
     }
     

@@ -17,7 +17,6 @@ final class MovieSearchViewController: BaseViewController {
     private var snapshot: Snapshot!
     
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    private var currentSearchWord: String?
     
     let viewModel = MovieSearchViewModel()
     
@@ -60,8 +59,8 @@ final class MovieSearchViewController: BaseViewController {
         }
         
         // 아래 로직 구현보다 이전 화면에서 검색어를 전달하는 시점이 더 먼저이기 때문에 lazy하게 선언하면 안 됨
-        viewModel.output.searchWord.bind { [weak self] receivedSearchWord in
-            print("Output searchWord bind")
+        viewModel.output.setReceivedSearchWord.bind { [weak self] receivedSearchWord in
+            print("Output setReceivedSearchWord bind")
             guard let self, let receivedSearchWord else { return }
             self.searchBar.text = receivedSearchWord
         }
@@ -80,15 +79,6 @@ final class MovieSearchViewController: BaseViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         viewModel.input.checkRecentSearchMovie.send(searchBar.text)
-    }
-    
-    private func updateRecentResults(_ recentSearch: RecentSearch) {
-        var recentSearches = UserDefaultsManager.recentSearches
-        if let index = recentSearches.firstIndex(where: { $0.search == recentSearch.search }) {
-            recentSearches.remove(at: index)
-        }
-        recentSearches.insert(recentSearch)
-        UserDefaultsManager.recentSearches = recentSearches
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
@@ -194,7 +184,7 @@ private extension MovieSearchViewController {
         dataSource.apply(snapshot)
     }
     
-    func updateSnapshot1(newItems newMovies: [Movie], after index: Int) {
+    func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
         let items = newMovies.map{ movie in
             let isLiked = likedMovies.contains(where: { $0.id == movie.id })
             let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
@@ -271,10 +261,10 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         view.endEditing(true)
-        guard let query = searchBar.text, currentSearchWord != query else { return }
-        currentSearchWord = query
+        let existingSearchWord = viewModel.output.updateRecentSearches.value
+        guard let query = searchBar.text,
+              existingSearchWord != query
+        else { return }
         viewModel.input.search.send(query)
-        let recentSearch = RecentSearch(search: query, date: Date())
-        updateRecentResults(recentSearch)
     }
 }

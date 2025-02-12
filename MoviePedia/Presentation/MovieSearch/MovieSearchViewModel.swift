@@ -22,10 +22,11 @@ final class MovieSearchViewModel: BaseViewModel {
     }
     
     struct Output {
-        let searchWord: Observable<String?> = Observable(nil)
+        let setReceivedSearchWord: Observable<String?> = Observable(nil)
         let showErrorAlert: Observable<String?> = Observable(nil)
         let updateInitialSnapshot: Observable<[Movie]?> = Observable(nil)
         let updatePagibleSnapshot: Observable<[Movie]?> = Observable(nil)
+        let updateRecentSearches: Observable<String> = Observable("") // 직전 검색어 확인 용도로도 사용됨 그래서 초기값이 nil이 아닌 공백란
         let becomeFirstResponder: Observable<Void> = Observable(())
         let updateLikedMovies: Observable<(Int, Bool)?> = Observable(nil)
     }
@@ -60,7 +61,7 @@ final class MovieSearchViewModel: BaseViewModel {
         input.receiveSearchWord.lazyBind { [weak self] searchWord in
             print("Input ReceiveSearchText bind: \(searchWord)")
             guard let self, let searchWord else { return }
-            self.output.searchWord.send(searchWord)
+            self.output.setReceivedSearchWord.send(searchWord)
             self.loadSearchResults(query: searchWord, isInitial: true)
         }
         
@@ -68,6 +69,8 @@ final class MovieSearchViewModel: BaseViewModel {
             print("Input Search bind: \(searchWord)")
             guard let self, let searchWord else { return }
             self.loadSearchResults(query: searchWord, isInitial: true)
+            self.output.updateRecentSearches.send(searchWord)
+            self.output.setReceivedSearchWord.send(searchWord)
         }
         
         input.willDisplaySearchList.lazyBind { [weak self] paginationInfo in
@@ -86,7 +89,7 @@ final class MovieSearchViewModel: BaseViewModel {
         input.didTapLikesButton.lazyBind { [weak self] likedMovieInfo in
             print("Input DidTapLikesButton bind: \(likedMovieInfo)")
             guard let self, let (movieId, isSelected) = likedMovieInfo else { return }
-            handleLikedMovie(movieId, isSelected)
+            self.handleLikedMovie(movieId, isSelected)
         }
     }
 }
