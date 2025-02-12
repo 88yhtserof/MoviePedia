@@ -18,6 +18,7 @@ final class CinemaViewModel: BaseViewModel {
         let didChangeLikeMovies: Observable<(Int, Bool)?> = Observable(nil)
         let didChangeRecentSearches: Observable<String?> = Observable(nil)
         let removeRecentSearch: Observable<RecentSearch?> = Observable(nil)
+        let removeAllRecentSearch: Observable<Void> = Observable(())
     }
     
     struct Output {
@@ -85,6 +86,12 @@ final class CinemaViewModel: BaseViewModel {
             print("Input removeRecentSearch bind")
             guard let self, let item else { return }
             self.removeRecentSearch(item)
+        }
+        
+        input.removeAllRecentSearch.lazyBind { [weak self] _ in
+            print("Input removeAllRecentSearch bind")
+            guard let self else { return }
+            self.removeallRecentSearch()
         }
     }
 }
@@ -166,5 +173,10 @@ private extension CinemaViewModel {
         recentSearches.remove(item)
         let array = Array(recentSearches)
         output.updateRecentSearchSnapshot.send(array)
+    }
+    
+    func removeallRecentSearch() {
+        recentSearches.removeAll()
+        output.updateRecentSearchSnapshot.send([])
     }
 }

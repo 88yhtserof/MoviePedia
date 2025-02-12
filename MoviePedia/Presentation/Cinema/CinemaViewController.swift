@@ -82,8 +82,7 @@ final class CinemaViewController: BaseViewController {
 //    }
     
     @objc func removeAllRecentSearches() {
-        UserDefaultsManager.recentSearches = []
-        createSnapshot()
+        viewModel.input.removeAllRecentSearch.send()
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
