@@ -18,6 +18,7 @@ final class MovieSearchViewModel: BaseViewModel {
         let search: Observable<String?> = Observable(nil)
         let willDisplaySearchList: Observable<(String, Int)?> = Observable(nil)
         let checkRecentSearchMovie: Observable<String?> = Observable(nil)
+        let didTapLikesButton: Observable<(Int, Bool)?> = Observable(nil)
     }
     
     struct Output {
@@ -26,6 +27,7 @@ final class MovieSearchViewModel: BaseViewModel {
         let updateInitialSnapshot: Observable<[Movie]?> = Observable(nil)
         let updatePagibleSnapshot: Observable<[Movie]?> = Observable(nil)
         let becomeFirstResponder: Observable<Void> = Observable(())
+        let updateLikedMovies: Observable<(Int, Bool)?> = Observable(nil)
     }
     
     // Data
@@ -33,6 +35,7 @@ final class MovieSearchViewModel: BaseViewModel {
     private var movies: [Movie] = []
     private var currentPage: Int = 1
     private var totalPage: Int?
+    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     
     init() {
         print("MovieSearchViewModel init")
@@ -79,6 +82,12 @@ final class MovieSearchViewModel: BaseViewModel {
             guard let self, let text else { return }
             self.checkRecentSearchWord(text)
         }
+        
+        input.didTapLikesButton.lazyBind { [weak self] likedMovieInfo in
+            print("Input DidTapLikesButton bind: \(likedMovieInfo)")
+            guard let self, let (movieId, isSelected) = likedMovieInfo else { return }
+            handleLikedMovie(movieId, isSelected)
+        }
     }
 }
 
@@ -119,5 +128,16 @@ private extension MovieSearchViewModel {
         if receiveSearchWord == nil && (text.isEmpty) {
             self.output.becomeFirstResponder.send()
         }
+    }
+    
+    func handleLikedMovie(_ likedMovieId: Int, _ isSelected: Bool) {
+        guard let movie = movies.first(where: { $0.id == likedMovieId }) else { return }
+        
+        if isSelected {
+            UserDefaultsManager.likedMovies.append(movie)
+        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            UserDefaultsManager.likedMovies.remove(at: removeIndex)
+        }
+        self.output.updateLikedMovies.send((movie.id, isSelected))
     }
 }

@@ -19,8 +19,6 @@ final class MovieSearchViewController: BaseViewController {
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     private var currentSearchWord: String?
     
-    var likeButtonSelected: ((Bool, Int) -> Void)?
-    
     let viewModel = MovieSearchViewModel()
     
     init() {
@@ -94,14 +92,7 @@ final class MovieSearchViewController: BaseViewController {
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-//        guard let movie = movies.first(where: { $0.id == sender.tag }) else { return }
-        
-//        if sender.isSelected {
-//            UserDefaultsManager.likedMovies.append(movie)
-//        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-//            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-//        }
-//        likeButtonSelected?(sender.isSelected, movie.id)
+        viewModel.input.didTapLikesButton.send((sender.tag, sender.isSelected))
     }
 }
 

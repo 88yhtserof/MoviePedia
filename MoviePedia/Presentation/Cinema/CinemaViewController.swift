@@ -66,6 +66,14 @@ final class CinemaViewController: BaseViewController {
             self.profileInfoView.updateLikedMoviesCount(likedMoviesCount)
         }
         
+        viewModel.output.updateCellWithLikedMovie.lazyBind { [weak self] likedMovieInfo in
+            guard let self, let (indexPath, isLiked) = likedMovieInfo else { return }
+            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
         viewModel.input.viewDidLoad.send()
     }
     
@@ -104,15 +112,11 @@ final class CinemaViewController: BaseViewController {
         let movieSearchVC = MovieSearchViewController()
         movieSearchVC.viewModel.input.receiveSearchWord.send(searchWord)
         
-//        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
-//            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
-//            let indexPath = IndexPath(item: movieIndex, section: 2)
-//            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-//                print("Could not find cell")
-//                return
-//            }
-//            cell.likeButton.isSelected = isLiked
-//        }
+        movieSearchVC.viewModel.output.updateLikedMovies.lazyBind { [weak self] likedMovieInfo in
+            guard let self else { return }
+            print("Output updateLikedMovies bind")
+            self.viewModel.input.pushToMovieSearchVC.send(likedMovieInfo)
+        }
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
@@ -258,7 +262,7 @@ extension CinemaViewController {
         case todayMovie
     }
     
-    enum Item: Hashable { // 이름 정정 필요
+    enum Item: Hashable {
         case emptyRecentSearch(String)
         case recentSearch(Identifier<RecentSearch>)
         case todayMovie(MovieInfo)

@@ -15,6 +15,7 @@ final class CinemaViewModel: BaseViewModel {
     struct Input {
         let viewDidLoad: Observable<Void> = Observable(())
         let didLikedButtonTapped: Observable<(Int, Bool)?> = Observable(nil)
+        let pushToMovieSearchVC: Observable<(Int, Bool)?> = Observable(nil)
     }
     
     struct Output {
@@ -23,6 +24,7 @@ final class CinemaViewModel: BaseViewModel {
         let updateRecentSearchSnapshot: Observable<[RecentSearch]?> = Observable(nil)
         let updateUser: Observable<User?> = Observable(nil)
         let updateLikedMoviesCount: Observable<Int?> = Observable(nil)
+        let updateCellWithLikedMovie: Observable<(IndexPath, Bool)?> = Observable(nil)
     }
     
     // Data
@@ -59,6 +61,12 @@ final class CinemaViewModel: BaseViewModel {
             guard let self,
                   let likedResult else { return }
             self.handleLikedMovie(likedResult)
+        }
+        
+        input.pushToMovieSearchVC.lazyBind { [weak self] likedMovieInfo in
+            print("Input pushToMovieSearchVC bind")
+            guard let self, let likedMovieInfo else { return }
+            self.handleLikedMovieIndexPath(likedMovieInfo)
         }
     }
 }
@@ -113,5 +121,15 @@ private extension CinemaViewModel {
         }
         
         self.getLikedMoviesCount()
+    }
+    
+    func handleLikedMovieIndexPath(_ likedResult: (Int, Bool)) {
+        let (movieId, isLiked) = likedResult
+        guard let movieIndex = movies?.firstIndex(where: { $0.id == movieId })
+        else { return }
+        movieInfoList?[movieIndex].isLiked = isLiked
+        
+        let indexPath = IndexPath(item: movieIndex, section: 2)
+        output.updateCellWithLikedMovie.send((indexPath, isLiked))
     }
 }
