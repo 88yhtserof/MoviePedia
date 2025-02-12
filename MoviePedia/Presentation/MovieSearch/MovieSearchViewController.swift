@@ -16,8 +16,6 @@ final class MovieSearchViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    
     let viewModel = MovieSearchViewModel()
     
     init() {
@@ -46,16 +44,16 @@ final class MovieSearchViewController: BaseViewController {
             self.showErrorAlert(message: errorMessage)
         }
         
-        viewModel.output.updateInitialSnapshot.lazyBind { [weak self] movies in
+        viewModel.output.updateInitialSnapshot.lazyBind { [weak self] items in
             print("Output updateInitialSnapshot bind")
-            guard let self, let movies else { return }
-            self.updateInitialSnapshot(movies)
+            guard let self, let items else { return }
+            self.updateInitialSnapshot(items)
         }
         
-        viewModel.output.updatePagibleSnapshot.lazyBind { [weak self] newMovies in
+        viewModel.output.updatePagibleSnapshot.lazyBind { [weak self] newItems in
             print("Output updatePagibleSnapshot bind")
-            guard let self, let newMovies else { return }
-            self.updatePagibleSnapshot(newMovies)
+            guard let self, let newItems else { return }
+            self.updatePagibleSnapshot(newItems)
         }
         
         // 아래 로직 구현보다 이전 화면에서 검색어를 전달하는 시점이 더 먼저이기 때문에 lazy하게 선언하면 안 됨
@@ -134,15 +132,9 @@ private extension MovieSearchViewController {
 
 //MARK: - CollectionView DataSource
 private extension MovieSearchViewController {
-    enum Section: Int, CaseIterable {
-        case empty
-        case searchResults
-    }
     
-    enum Item: Hashable {
-        case empty(String)
-        case movie(MovieInfo)
-    }
+    typealias Section = MovieSearchViewModel.Section
+    typealias Item = MovieSearchViewModel.Item
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
@@ -161,7 +153,7 @@ private extension MovieSearchViewController {
         snapshot.appendSections(Section.allCases)
     }
     
-    func updateInitialSnapshot(_ movies: [Movie]) {
+    func updateInitialSnapshot(_ movies: [Item]) {
         let exsitingMovies = snapshot.itemIdentifiers
         snapshot.deleteItems(exsitingMovies)
         
@@ -174,24 +166,8 @@ private extension MovieSearchViewController {
         }
     }
     
-    func updatePagibleSnapshot(_ newMovies: [Movie]) {
-        let items = newMovies.map{ movie in
-            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item.movie(movieInfo)
-        }
-        snapshot.appendItems(items, toSection: .searchResults)
-        dataSource.apply(snapshot)
-    }
-    
-    func updateSnapshot(newItems newMovies: [Movie], after index: Int) {
-        let items = newMovies.map{ movie in
-            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item.movie(movieInfo)
-        }
-        guard let afterItem = snapshot.itemIdentifiers(inSection: .searchResults).last else { return }
-        snapshot.insertItems(items, afterItem: afterItem)
+    func updatePagibleSnapshot(_ newItems: [Item]) {
+        snapshot.appendItems(newItems, toSection: .searchResults)
         dataSource.apply(snapshot)
     }
 }

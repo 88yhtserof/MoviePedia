@@ -17,8 +17,6 @@ final class CinemaViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var isUpdatingTodayMovieNeeded: Bool = false
-    
     let viewModel = CinemaViewModel()
     
     override func viewDidLoad() {

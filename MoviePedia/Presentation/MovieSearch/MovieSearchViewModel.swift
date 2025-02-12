@@ -24,8 +24,8 @@ final class MovieSearchViewModel: BaseViewModel {
     struct Output {
         let setReceivedSearchWord: Observable<String?> = Observable(nil)
         let showErrorAlert: Observable<String?> = Observable(nil)
-        let updateInitialSnapshot: Observable<[Movie]?> = Observable(nil)
-        let updatePagibleSnapshot: Observable<[Movie]?> = Observable(nil)
+        let updateInitialSnapshot: Observable<[Item]?> = Observable(nil)
+        let updatePagibleSnapshot: Observable<[Item]?> = Observable(nil)
         let updateRecentSearches: Observable<String> = Observable("") // 직전 검색어 확인 용도로도 사용됨 그래서 초기값이 nil이 아닌 공백란
         let becomeFirstResponder: Observable<Void> = Observable(())
         let updateLikedMovies: Observable<(Int, Bool)?> = Observable(nil)
@@ -94,6 +94,18 @@ final class MovieSearchViewModel: BaseViewModel {
     }
 }
 
+extension MovieSearchViewModel {
+    enum Section: Int, CaseIterable {
+        case empty
+        case searchResults
+    }
+    
+    enum Item: Hashable {
+        case empty(String)
+        case movie(MovieInfo)
+    }
+}
+
 private extension MovieSearchViewModel {
     
     func loadSearchResults(query: String, isInitial: Bool) {
@@ -107,11 +119,17 @@ private extension MovieSearchViewModel {
             self.currentPage += 1
             self.totalPage = value.total_pages
             self.movies.append(contentsOf: value.results)
+            
+            let items = value.results.map{ movie in
+                let isLiked = self.likedMovies.contains(where: { $0.id == movie.id })
+                let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
+                return Item.movie(movieInfo)
+            }
+            
             if isInitial {
-                self.output.updateInitialSnapshot.send(self.movies)
-                
+                self.output.updateInitialSnapshot.send(items)
             } else {
-                self.output.updatePagibleSnapshot.send(value.results)
+                self.output.updatePagibleSnapshot.send(items)
             }
         } failureHandler: { error in
             self.output.showErrorAlert.send(error.localizedDescription)
