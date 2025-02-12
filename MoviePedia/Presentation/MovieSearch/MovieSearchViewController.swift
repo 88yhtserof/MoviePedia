@@ -176,16 +176,19 @@ private extension MovieSearchViewController {
 extension MovieSearchViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        guard indexPath.section == 1 else { return }
-//        let movieDetailVC = MovieDetailViewController(movie: movies[indexPath.item])
-//        movieDetailVC.likeButtonSelected = { (isLiked) in
-//            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
-//                print("Could not find cell")
-//                return
-//            }
-//            cell.likeButton.isSelected = isLiked
-//        }
-//        navigationController?.pushViewController(movieDetailVC, animated: true)
+        guard indexPath.section == 1 else { return }
+        let movieDetailVC = MovieDetailViewController()
+        let movie = viewModel.movies[indexPath.row]
+        movieDetailVC.viewModel.input.receivedMovie.send(movie)
+        
+        movieDetailVC.likeButtonSelected = { (isLiked) in
+            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
+        navigationController?.pushViewController(movieDetailVC, animated: true)
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
