@@ -47,6 +47,11 @@ final class MovieDetailViewController: BaseViewController {
             self.showErrorAlert(message: errorMessage)
         }
         
+        viewModel.output.createSnapshot.lazyBind { [weak self] movieDetail in
+            guard let self, let movieDetail else { return }
+            self.createSnapshot(movieDetail)
+        }
+        
         viewModel.input.viewDidLoad.send()
     }
     
@@ -90,19 +95,17 @@ private extension MovieDetailViewController {
         let castCellRegistration = UICollectionView.CellRegistration(handler: castCellRegistrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            guard let section = Section(rawValue: indexPath.section) else {
-                fatalError("Unknown section")
-            }
             var cell: UICollectionViewCell
-            switch section {
-            case .backdrop:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop?.value)
-            case .synopsys:
-                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis?.value)
-            case .cast:
-                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast?.value)
-            case .poster:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.poster?.value)
+            
+            switch itemIdentifier {
+            case .backdrop(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: value.value)
+            case .synopsis(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: value.value)
+            case .cast(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: value.value)
+            case .poster(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: value.value)
             }
             
             return cell
@@ -122,62 +125,16 @@ private extension MovieDetailViewController {
             }
         }
         
-        createSnapshot()
+//        createSnapshot()
         collectionView.dataSource = dataSource
     }
 }
 
 //MARK: - CollectionView DataSource
 private extension MovieDetailViewController {
-    enum Section: Int {
-        case backdrop
-        case synopsys
-        case cast
-        case poster
-        
-        var header: String? {
-            switch self {
-            case .backdrop:
-                return nil
-            case .synopsys:
-                return "Synopsis"
-            case .cast:
-                return "Cast"
-            case .poster:
-                return "Poster"
-            }
-        }
-    }
     
-    struct Item: Hashable {
-        let backdrop: Identifier<Image>?
-        let synopsis: Identifier<String>?
-        let cast: Identifier<Credit>?
-        let poster: Identifier<Image>?
-        
-        private init(backdrop: Image?, synopsis: String?, cast: Credit?, poster: Image?) {
-            self.backdrop = backdrop != nil ? Identifier(value: backdrop!) : nil
-            self.synopsis = synopsis != nil ? Identifier(value: synopsis!) : nil
-            self.cast = cast != nil ? Identifier(value: cast!) : nil
-            self.poster = poster != nil ? Identifier(value: poster!) : nil
-        }
-        
-        init(backdrop: Image) {
-            self.init(backdrop: backdrop, synopsis: nil, cast: nil, poster: nil)
-        }
-        
-        init(synopsis: String) {
-            self.init(backdrop: nil, synopsis: synopsis, cast: nil, poster: nil)
-        }
-        
-        init(cast: Credit) {
-            self.init(backdrop: nil, synopsis: nil, cast: cast, poster: nil)
-        }
-        
-        init(poster: Image) {
-            self.init(backdrop: nil, synopsis: nil, cast: nil, poster: poster)
-        }
-    }
+    typealias Section = MovieDetailViewModel.Section
+    typealias Item = MovieDetailViewModel.Item
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
@@ -219,7 +176,7 @@ private extension MovieDetailViewController {
         switch section {
         case .backdrop:
             return
-        case .synopsys:
+        case .synopsis:
             let moreButton = MoreButton()
             moreButton.tag = indexPath.item
             moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
@@ -247,19 +204,15 @@ private extension MovieDetailViewController {
         dataSource.apply(snapshot)
     }
     
-    func createSnapshot() {
-//        let backdropItems = backdrops.prefix(5).map{ Item(backdrop: $0) }
-//        let synopsysItems = [Item(synopsis: movie.overview ?? "")]
-//        let creditItems = credits.map{ Item(cast: $0) }
-//        let posterItems: [Item] = posters.map{ Item(poster: $0) }
-//        
-//        snapshot = Snapshot()
-//        snapshot.appendSections([.backdrop, .synopsys, .cast, .poster])
-//        snapshot.appendItems(backdropItems, toSection: .backdrop)
-//        snapshot.appendItems(synopsysItems, toSection: .synopsys)
-//        snapshot.appendItems(creditItems, toSection: .cast)
-//        snapshot.appendItems(posterItems, toSection: .poster)
-//        dataSource.apply(snapshot)
+    func createSnapshot(_ movieDeatil: MovieDetailViewModel.MovieDetail) {
+        
+        snapshot = Snapshot()
+        snapshot.appendSections([.backdrop, .synopsis, .cast, .poster])
+        snapshot.appendItems(movieDeatil.backdropItems, toSection: .backdrop)
+        snapshot.appendItems(movieDeatil.synopsysItems, toSection: .synopsis)
+        snapshot.appendItems(movieDeatil.creditItems, toSection: .cast)
+        snapshot.appendItems(movieDeatil.posterItems, toSection: .poster)
+        dataSource.apply(snapshot)
     }
     
 
@@ -297,7 +250,7 @@ private extension MovieDetailViewController {
         switch section {
         case .backdrop:
             return sectionForBackdrop()
-        case .synopsys:
+        case .synopsis:
             return sectionForSynopsys()
         case .cast:
             return sectionForCast()

@@ -20,7 +20,7 @@ final class MovieDetailViewModel: BaseViewModel {
     struct Output {
         let showErrorAlert: Observable<String?> = Observable(nil)
         let configureInitialViewData: Observable<Movie?> = Observable(nil)
-        let createSnapshot: Observable<Void> = Observable(())
+        let createSnapshot: Observable<MovieDetail?> = Observable(nil)
     }
     
     // Data
@@ -51,6 +51,38 @@ final class MovieDetailViewModel: BaseViewModel {
     }
 }
 
+extension MovieDetailViewModel {
+    
+    typealias MovieDetail = (backdropItems: [Item], synopsysItems: [Item], creditItems: [Item], posterItems: [Item])
+    
+    enum Section: Int {
+        case backdrop
+        case synopsis
+        case cast
+        case poster
+        
+        var header: String? {
+            switch self {
+            case .backdrop:
+                return nil
+            case .synopsis:
+                return "Synopsis"
+            case .cast:
+                return "Cast"
+            case .poster:
+                return "Poster"
+            }
+        }
+    }
+    
+    enum Item: Hashable {
+        case backdrop(Identifier<Image>)
+        case synopsis(Identifier<String>)
+        case cast(Identifier<Credit>)
+        case poster(Identifier<Image>)
+    }
+}
+
 private extension MovieDetailViewModel {
     
     func shouldLoadMovieDetail() {
@@ -72,8 +104,9 @@ private extension MovieDetailViewModel {
             group.leave()
         }
         
-        group.notify(queue: .main) {
-//            self.createSnapshot()
+        group.notify(queue: .main) { [weak self] in
+            guard let self else { return }
+            self.configureMoiveDetail()
         }
     }
     
@@ -95,5 +128,16 @@ private extension MovieDetailViewModel {
         } failureHandler: { error in
             self.output.showErrorAlert.send(error.localizedDescription)
         }
+    }
+    
+    func configureMoiveDetail() {
+        guard let movie = input.receivedMovie.value else { return }
+        let backdropItems = self.backdrops.prefix(5).map{ Item.backdrop(Identifier(value: $0)) }
+        let synopsysItems = [Item.synopsis(Identifier(value: movie.overview ?? ""))]
+        let creditItems = credits.map{ Item.cast(Identifier(value: $0)) }
+        let posterItems: [Item] = self.posters.map{ Item.poster(Identifier(value: $0)) }
+        let movieDetail = (backdropItems, synopsysItems, creditItems, posterItems)
+        
+        output.createSnapshot.send(movieDetail)
     }
 }
