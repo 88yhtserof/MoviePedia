@@ -19,8 +19,9 @@ final class MovieDetailViewModel: BaseViewModel {
     
     struct Output {
         let showErrorAlert: Observable<String?> = Observable(nil)
-        let configureInitialViewData: Observable<Movie?> = Observable(nil)
+        let configureInitialViewData: Observable<(Movie)?> = Observable(nil)
         let createSnapshot: Observable<MovieDetail?> = Observable(nil)
+        let configureMovieDetailInfo: Observable<(String, String, String)?> = Observable(nil)
     }
     
     // Data
@@ -46,7 +47,8 @@ final class MovieDetailViewModel: BaseViewModel {
         
         input.viewDidLoad.lazyBind { [weak self] _ in
             guard let self else { return }
-            shouldLoadMovieDetail()
+            self.shouldLoadMovieDetail()
+            self.configureMovieDetailInfo()
         }
     }
 }
@@ -88,7 +90,7 @@ private extension MovieDetailViewModel {
     func shouldLoadMovieDetail() {
         guard let receivedMovie = input.receivedMovie.value else { return }
         self.loadMovieDetail(receivedMovie)
-        output.configureInitialViewData.send(receivedMovie)
+        self.output.configureInitialViewData.send(receivedMovie)
     }
     
     func loadMovieDetail(_ movie: Movie) {
@@ -139,5 +141,15 @@ private extension MovieDetailViewModel {
         let movieDetail = (backdropItems, synopsysItems, creditItems, posterItems)
         
         output.createSnapshot.send(movieDetail)
+    }
+    
+    func configureMovieDetailInfo() {
+        guard let movie = input.receivedMovie.value else { return }
+        
+        let dateStr = movie.release_date ?? "_"
+        let ratingStr = String(movie.vote_average ?? 0.0)
+        let genres = (movie.genre_ids?.prefix(2).compactMap{ Genre(rawValue: $0)?.name_kr }) ?? []
+        let genreStr = genres.joined(separator: ", ")
+        output.configureMovieDetailInfo.send((dateStr, ratingStr, genreStr))
     }
 }

@@ -125,7 +125,6 @@ private extension MovieDetailViewController {
             }
         }
         
-//        createSnapshot()
         collectionView.dataSource = dataSource
     }
 }
@@ -159,12 +158,8 @@ private extension MovieDetailViewController {
     
     func movieDeatilInfoSupplemetaryRegistrationHandler(supplementaryView: MovieDetailInfoSupplementaryView, string: String, indexPath: IndexPath) {
         if indexPath.section == 0 {
-            // TODO: - Movie 작업 모델로 분리
-//            let dateStr = movie.release_date ?? "_"
-//            let ratingStr = String(movie.vote_average ?? 0.0)
-//            let genres = (movie.genre_ids?.prefix(2).compactMap{ Genre(rawValue: $0)?.name_kr }) ?? []
-//            let genreStr = genres.joined(separator: ", ")
-//            supplementaryView.configure(with: [dateStr, ratingStr, genreStr])
+            guard let (dateStr, ratingStr, genreStr) = viewModel.output.configureMovieDetailInfo.value else { return }
+            supplementaryView.configure(with: [dateStr, ratingStr, genreStr])
         }
     }
     
