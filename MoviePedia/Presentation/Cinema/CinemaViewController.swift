@@ -10,25 +10,14 @@ import SnapKit
 
 final class CinemaViewController: BaseViewController {
     
-    private lazy var profileInfoView = ProfileInfoView(user: user, likedMoviesCount: likedMovies.count)
+    private lazy var profileInfoView = ProfileInfoView()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     private let searchBarButtonItem = UIBarButtonItem()
     
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var user: User { UserDefaultsManager.user! }
-    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    private var recentSearches: Set<RecentSearch> {
-        get {
-            UserDefaultsManager.recentSearches
-        }
-        set {
-            UserDefaultsManager.recentSearches = newValue
-        }
-    }
-    private var todayMovies: [Movie] = []
-    private var isUpdatingTodayMovieNeeded: Bool = false
+    let viewModel = CinemaViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,46 +26,66 @@ final class CinemaViewController: BaseViewController {
         configureHierarchy()
         configureConstraints()
         configureCollectionViewDataSource()
-        loadTodayMovies()
+        bind()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        profileInfoView.user = user
-        profileInfoView.updateLikedMoviesCount(likedMovies.count)
-        createSnapshot()
+    func bind() {
+        
+        viewModel.output.updateTodayMovieSnapshot.lazyBind { [weak self] movies in
+            print("Output updateTodayMovieSnapshot bind")
+            guard let self, let movies else { return }
+            self.updateTodayMovieSectionSnapshot(items: movies)
+        }
+        
+        viewModel.output.updateRecentSearchSnapshot.lazyBind { [weak self] recentSearches in
+            print("Output updateRecentSearchSnapshot bind")
+            guard let self, let recentSearches else { return }
+            self.updateRecentSearchSectionSnapshot(items: recentSearches)
+        }
+        
+        viewModel.output.updateUser.lazyBind { [weak self] user in
+            print("Out updateUser bind")
+            guard let self, let user else { return }
+            profileInfoView.user = user
+        }
+        
+        viewModel.output.updateLikedMoviesCount.lazyBind { [weak self] likedMoviesCount in
+            print("Out updateLikeMoviesCount bind")
+            guard let self, let likedMoviesCount else { return }
+            self.profileInfoView.updateLikedMoviesCount(likedMoviesCount)
+        }
+        
+        viewModel.output.updateCellWithLikedMovie.lazyBind { [weak self] likedMovieInfo in
+            guard let self, let (indexPath, isLiked) = likedMovieInfo else { return }
+            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+                print("Could not find cell")
+                return
+            }
+            cell.likeButton.isSelected = isLiked
+        }
+        viewModel.input.viewDidLoad.send()
     }
     
-    @objc func presentProfileEditVC() {
-        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
-        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
-        if let sheet = profileNicknameEditNC.sheetPresentationController {
-            sheet.detents = [.large()]
-            sheet.prefersGrabberVisible = true
-        }
-        profileNicknameEditVC.saveProfileHandler = { user in
-            self.profileInfoView.user = user
-        }
-        present(profileNicknameEditNC, animated: true)
-    }
+//    @objc func presentProfileEditVC() {
+//        let profileNicknameEditVC = ProfileNicknameEditViewController(user: user, isEditedMode: true)
+//        let profileNicknameEditNC = UINavigationController(rootViewController: profileNicknameEditVC)
+//        if let sheet = profileNicknameEditNC.sheetPresentationController {
+//            sheet.detents = [.large()]
+//            sheet.prefersGrabberVisible = true
+//        }
+//        profileNicknameEditVC.saveProfileHandler = { user in
+//            self.profileInfoView.user = user
+//        }
+//        present(profileNicknameEditNC, animated: true)
+//    }
     
     @objc func removeAllRecentSearches() {
-        UserDefaultsManager.recentSearches = []
-        createSnapshot()
+        viewModel.input.removeAllRecentSearch.send()
     }
     
     @objc func likeButtonTapped(_ sender: UIButton) {
-        guard let movie = todayMovies.first(where: { $0.id == sender.tag }) else {
-            print("Could not find movie")
-            return
-        }
-        
-        if sender.isSelected {
-            UserDefaultsManager.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-        }
-        profileInfoView.updateLikedMoviesCount(likedMovies.count)
+        let likedResult = (sender.tag, sender.isSelected)
+        viewModel.input.didLikedButtonTapped.send(likedResult)
     }
     
     @objc func searchBarButtonItemDidTapped() {
@@ -87,27 +96,22 @@ final class CinemaViewController: BaseViewController {
         pushToMovieSearchVC(sender.attributedTitle(for: .normal)?.string)
     }
     
-    private func loadTodayMovies() {
-        let trendingRequest = TrendingRequest()
-        TMDBNetworkManager.shared.request(api: .treding(trendingRequest)) { (trending: MovieResponse) in
-            self.todayMovies = trending.results
-            self.createSnapshot()
-        } failureHandler: { error in
-            self.showErrorAlert(message: error.localizedDescription)
-        }
-    }
-    
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
-        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
-        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
-            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
-            let indexPath = IndexPath(item: movieIndex, section: 2)
-            guard let cell = self.collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                print("Could not find cell")
-                return
-            }
-            cell.likeButton.isSelected = isLiked
+        let movieSearchVC = MovieSearchViewController()
+        movieSearchVC.viewModel.input.receiveSearchWord.send(searchWord)
+        
+        movieSearchVC.viewModel.output.updateLikedMovies.lazyBind { [weak self] likedMovieInfo in
+            print("Output updateLikedMovies bind")
+            guard let self else { return }
+            self.viewModel.input.didChangeLikeMovies.send(likedMovieInfo)
         }
+        
+        movieSearchVC.viewModel.output.updateRecentSearches.lazyBind { [weak self] searchWord in
+            print("Output updateRecentSearches bind")
+            guard let self else { return }
+            self.viewModel.input.didChangeRecentSearches.send(searchWord)
+        }
+        
         navigationController?.pushViewController(movieSearchVC, animated: true)
     }
 }
@@ -122,7 +126,7 @@ private extension CinemaViewController {
         navigationItem.rightBarButtonItem = searchBarButtonItem
         navigationItem.title = "MOVIE PEDIA"
         
-        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
+//        profileInfoView.profileControlView.addTarget(self, action: #selector(presentProfileEditVC), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
         collectionView.isScrollEnabled = false
@@ -152,18 +156,15 @@ private extension CinemaViewController {
         let todayMovieCellRegidtration = UICollectionView.CellRegistration(handler: todayMovieCellRegidtrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            guard let section = Section(rawValue: indexPath.section) else {
-                fatalError("Unknown Section")
-            }
             var cell: UICollectionViewCell
             
-            switch section {
-            case .emptyRecentSearch:
-                cell = collectionView.dequeueConfiguredReusableCell(using: emptyRecentSearchCellRegistration, for: indexPath, item: itemIdentifier.empty)
-            case .recentSeach:
-                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: itemIdentifier.recentSearch?.value)
-            case .todayMovie:
-                cell  = collectionView.dequeueConfiguredReusableCell(using: todayMovieCellRegidtration, for: indexPath, item: itemIdentifier.todayMovie)
+            switch itemIdentifier {
+            case .emptyRecentSearch(let items):
+                cell = collectionView.dequeueConfiguredReusableCell(using: emptyRecentSearchCellRegistration, for: indexPath, item: items)
+            case .recentSearch(let items):
+                cell = collectionView.dequeueConfiguredReusableCell(using: recentSearchCellRegistration, for: indexPath, item: items.value)
+            case .todayMovie(let items):
+                cell  = collectionView.dequeueConfiguredReusableCell(using: todayMovieCellRegidtration, for: indexPath, item: items)
             }
             
             return cell
@@ -174,6 +175,7 @@ private extension CinemaViewController {
             return collectionView.dequeueConfiguredReusableSupplementary(using: headerSupplementaryProvider, for: indexPath)
         }
         
+        createSnapshot()
         collectionView.dataSource = dataSource
     }
 }
@@ -194,7 +196,7 @@ private extension CinemaViewController {
         switch section {
         case .emptyRecentSearch:
             return sectionForEmptyRecentSearch()
-        case .recentSeach:
+        case .recentSearch:
             return sectionForRecentSearch()
         case .todayMovie:
             return sectionForTodayMovie()
@@ -251,33 +253,14 @@ private extension CinemaViewController {
 extension CinemaViewController {
     enum Section: Int, CaseIterable {
         case emptyRecentSearch
-        case recentSeach
+        case recentSearch
         case todayMovie
     }
     
-    struct Item: Hashable {
-        let empty: String?
-        let recentSearch: Identifier<RecentSearch>?
-        let todayMovie: MovieInfo?
-        
-        private init(empty: String?, recentSearch: RecentSearch?, todayMovie: MovieInfo?) {
-            self.empty = empty
-            self.recentSearch = recentSearch != nil ? Identifier(value: recentSearch!) : nil
-            self.todayMovie = todayMovie
-        }
-        
-        init(empty: String) {
-            self.init(empty: empty, recentSearch: nil, todayMovie: nil)
-        }
-        
-        init(recentSearch: RecentSearch) {
-            self.init(empty: nil, recentSearch: recentSearch, todayMovie: nil)
-        }
-        
-        init(todayMovie: MovieInfo) {
-            self.init(empty: nil, recentSearch: nil, todayMovie: todayMovie)
-        }
-        
+    enum Item: Hashable {
+        case emptyRecentSearch(String)
+        case recentSearch(Identifier<RecentSearch>)
+        case todayMovie(MovieInfo)
     }
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
@@ -291,14 +274,15 @@ extension CinemaViewController {
         cell.configure(with: item.search)
         cell.titleButton.addTarget(self, action: #selector(recentSearchesButtonTapped), for: .touchUpInside)
         cell.deleteAction = { [self] in
-            let deletedItem = item
-            self.recentSearches.remove(deletedItem)
-            self.createSnapshot()
+            viewModel.input.removeRecentSearch.send(item)
         }
     }
     
     func todayMovieCellRegidtrationHandler(cell: TodayMovieCollectionViewCell, indexPath: IndexPath, item: MovieInfo) {
-        let movieInfo = MovieInfo(movie: item.movie, isLiked: item.isLiked)
+        guard let movieInfo = viewModel.movieInfoList?[indexPath.item] else {
+            print("Could not get movieInfo")
+            return
+        }
         cell.configure(with: movieInfo)
         cell.likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     }
@@ -319,27 +303,28 @@ extension CinemaViewController {
     func createSnapshot() {
         snapshot = Snapshot()
         snapshot.appendSections(Section.allCases)
+    }
+    
+    func updateRecentSearchSectionSnapshot(items recentSearches: [RecentSearch]) {
+        let exisitingEmptyRecentSearchItems = snapshot.itemIdentifiers(inSection: .emptyRecentSearch)
+        let existingRecentSearchItems = snapshot.itemIdentifiers(inSection: .recentSearch)
+        snapshot.deleteItems(exisitingEmptyRecentSearchItems + existingRecentSearchItems)
         
         if recentSearches.isEmpty {
-            let items = [Item(empty: "최근 검색 내역이 없습니다.")]
+            let items = [Item.emptyRecentSearch("최근 검색 내역이 없습니다.")]
             snapshot.appendItems(items, toSection: .emptyRecentSearch)
         } else {
-            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item(recentSearch: $0) }
-            snapshot.appendItems(items, toSection: .recentSeach)
+            let items = recentSearches.sorted(by: {$0.date > $1.date}).map{ Item.recentSearch(Identifier(value: $0)) }
+            snapshot.appendItems(items, toSection: .recentSearch)
         }
-        
-        let items = todayMovies.map{ movie in
-            let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-            let movieInfo = MovieInfo(movie: movie, isLiked: isLiked)
-            return Item(todayMovie: movieInfo)
-        }
-        snapshot.appendItems(items, toSection: .todayMovie)
         
         dataSource.apply(snapshot)
     }
     
-    // TODO: - 데이터 갱신 로직 개선 후 적용
-    func updateSnapshot(for section: Section) {
+    func updateTodayMovieSectionSnapshot(items movieInfoList: [MovieInfo]) {
+        let items = movieInfoList.map{ Item.todayMovie($0) }
+        snapshot.appendItems(items, toSection: .todayMovie)
+        dataSource.apply(snapshot)
     }
 }
 
@@ -347,15 +332,15 @@ extension CinemaViewController {
 extension CinemaViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 2 {
-            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
-            movieDetailVC.likeButtonSelected = { (isLiked) in
-                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
-                    print("Could not find cell")
-                    return
-                }
-                cell.likeButton.isSelected = isLiked
-            }
-            navigationController?.pushViewController(movieDetailVC, animated: true)
+//            let movieDetailVC = MovieDetailViewController(movie: todayMovies[indexPath.item])
+//            movieDetailVC.likeButtonSelected = { (isLiked) in
+//                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+//                    print("Could not find cell")
+//                    return
+//                }
+//                cell.likeButton.isSelected = isLiked
+//            }
+//            navigationController?.pushViewController(movieDetailVC, animated: true)
         }
     }
 }
