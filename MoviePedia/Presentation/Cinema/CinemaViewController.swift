@@ -101,7 +101,9 @@ final class CinemaViewController: BaseViewController {
     }
     
     func pushToMovieSearchVC(_ searchWord: String? = nil) {
-        let movieSearchVC = MovieSearchViewController(searchWord: searchWord)
+        let movieSearchVC = MovieSearchViewController()
+        movieSearchVC.viewModel.input.receiveSearchWord.send(searchWord)
+        
 //        movieSearchVC.likeButtonSelected = { (isLiked, movieID) in
 //            guard let movieIndex = self.todayMovies.firstIndex(where: { $0.id == movieID }) else { return }
 //            let indexPath = IndexPath(item: movieIndex, section: 2)

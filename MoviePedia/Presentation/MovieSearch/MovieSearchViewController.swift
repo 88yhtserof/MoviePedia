@@ -18,14 +18,12 @@ final class MovieSearchViewController: BaseViewController {
     
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
     private var currentSearchWord: String?
-    private let recenteSearchedWord: String?
     
     var likeButtonSelected: ((Bool, Int) -> Void)?
     
     let viewModel = MovieSearchViewModel()
     
-    init(searchWord: String? = nil) {
-        recenteSearchedWord = searchWord
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -46,18 +44,36 @@ final class MovieSearchViewController: BaseViewController {
     private func bind() {
         
         viewModel.output.showErrorAlert.lazyBind { [weak self] errorMessage in
+            print("Output showErrorAlert bind")
             guard let self, let errorMessage else { return }
             self.showErrorAlert(message: errorMessage)
         }
         
         viewModel.output.updateInitialSnapshot.lazyBind { [weak self] movies in
+            print("Output updateInitialSnapshot bind")
             guard let self, let movies else { return }
             self.updateInitialSnapshot(movies)
         }
         
         viewModel.output.updatePagibleSnapshot.lazyBind { [weak self] newMovies in
+            print("Output updatePagibleSnapshot bind")
             guard let self, let newMovies else { return }
             self.updatePagibleSnapshot(newMovies)
+        }
+        
+        // 아래 로직 구현보다 이전 화면에서 검색어를 전달하는 시점이 더 먼저이기 때문에 lazy하게 선언하면 안 됨
+        viewModel.output.searchWord.bind { [weak self] receivedSearchWord in
+            print("Output searchWord bind")
+            guard let self, let receivedSearchWord else { return }
+            self.searchBar.text = receivedSearchWord
+        }
+        
+        viewModel.output.becomeFirstResponder.lazyBind { [weak self] in
+            print("Output becomeFirstResponder bind")
+            guard let self else { return }
+            DispatchQueue.main.async() {
+                self.searchBar.becomeFirstResponder()
+            }
         }
         
         viewModel.input.viewDidLoad.send()
@@ -65,11 +81,7 @@ final class MovieSearchViewController: BaseViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if recenteSearchedWord == nil && (searchBar.text?.isEmpty ?? true) {
-            DispatchQueue.main.async() {
-                self.searchBar.becomeFirstResponder()
-            }
-        }
+        viewModel.input.checkRecentSearchMovie.send(searchBar.text)
     }
     
     private func updateRecentResults(_ recentSearch: RecentSearch) {

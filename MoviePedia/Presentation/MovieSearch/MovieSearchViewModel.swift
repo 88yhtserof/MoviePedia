@@ -17,6 +17,7 @@ final class MovieSearchViewModel: BaseViewModel {
         let viewDidLoad: Observable<Void> = Observable(())
         let search: Observable<String?> = Observable(nil)
         let willDisplaySearchList: Observable<(String, Int)?> = Observable(nil)
+        let checkRecentSearchMovie: Observable<String?> = Observable(nil)
     }
     
     struct Output {
@@ -24,6 +25,7 @@ final class MovieSearchViewModel: BaseViewModel {
         let showErrorAlert: Observable<String?> = Observable(nil)
         let updateInitialSnapshot: Observable<[Movie]?> = Observable(nil)
         let updatePagibleSnapshot: Observable<[Movie]?> = Observable(nil)
+        let becomeFirstResponder: Observable<Void> = Observable(())
     }
     
     // Data
@@ -71,6 +73,12 @@ final class MovieSearchViewModel: BaseViewModel {
                   let (searchWord, index) = paginationInfo else { return }
             self.pagonationSearchResults(searchWord, index)
         }
+        
+        input.checkRecentSearchMovie.lazyBind { [weak self] text in
+            print("Input CheckRecentSearchMovie bind: \(text)")
+            guard let self, let text else { return }
+            self.checkRecentSearchWord(text)
+        }
     }
 }
 
@@ -103,6 +111,13 @@ private extension MovieSearchViewModel {
         
         if currentPage <= totalPage && index == (movies.count - 2) {
             loadSearchResults(query: searchWord, isInitial: false)
+        }
+    }
+    
+    func checkRecentSearchWord(_ text: String) {
+        let receiveSearchWord = self.input.receiveSearchWord.value
+        if receiveSearchWord == nil && (text.isEmpty) {
+            self.output.becomeFirstResponder.send()
         }
     }
 }
