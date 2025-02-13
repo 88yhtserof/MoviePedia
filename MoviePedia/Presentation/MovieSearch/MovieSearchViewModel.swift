@@ -33,7 +33,7 @@ final class MovieSearchViewModel: BaseViewModel {
     
     // Data
     private let networkManager = TMDBNetworkManager.shared
-    private var movies: [Movie] = []
+    var movies: [Movie] = []
     private var currentPage: Int = 1
     private var totalPage: Int?
     private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }

@@ -17,24 +17,7 @@ final class MovieDetailViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private let networkManager = TMDBNetworkManager.shared
-    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    
-    private let movie: Movie
-    private var backdrops: [Image] = []
-    private var posters: [Image] = []
-    private var credits: [Credit] = []
-    
-    var likeButtonSelected: ((Bool) -> Void)?
-    
-    init(movie: Movie) {
-        self.movie = movie
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    let viewModel = MovieDetailViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,66 +26,47 @@ final class MovieDetailViewController: BaseViewController {
         configureHierarachy()
         configureConstraints()
         configureCollectionViewDataSource()
-        loadMovieDetail()
+        bind()
     }
     
-    private func loadMovieDetail() {
-        let group = DispatchGroup()
+    private func bind() {
         
-        group.enter()
-        loadMovieImage() {
-            group.leave()
-        }
-
-        group.enter()
-        loadMovieCredit() {
-            group.leave()
+        viewModel.output.configureInitialViewData.lazyBind { [weak self] movie in
+            print("Output configureInitialViewData bind")
+            guard let self, let movie else { return }
+            navigationItem.title = movie.title
         }
         
-        group.notify(queue: .main) {
-            self.createSnapshot()
+        viewModel.output.showErrorAlert.lazyBind { [weak self] errorMessage in
+            print("Output showErrorAlert bind")
+            guard let self, let errorMessage else { return }
+            self.showErrorAlert(message: errorMessage)
         }
-    }
-    
-    private func loadMovieImage(completionHandler: @escaping () -> Void) {
-        let request = ImageRequest(movieID: movie.id)
-        networkManager.request(api: .image(request)) { [self] (image: ImageResponse) in
-            self.backdrops = image.backdrops ?? []
-            self.posters = image.posters ?? []
-            completionHandler()
-        } failureHandler: { error in
-            print(error)
+        
+        viewModel.output.createSnapshot.lazyBind { [weak self] movieDetail in
+            print("Ouytput createSnapshot bind")
+            guard let self, let movieDetail else { return }
+            self.createSnapshot(movieDetail)
         }
-    }
-    private func loadMovieCredit(completionHandler: @escaping () -> Void) {
-        let request = CreditRequest(movieID: movie.id)
-        networkManager.request(api: .credit(request)) { [self] (credit: CreditResponse) in
-            self.credits = credit.cast ?? []
-            completionHandler()
-        } failureHandler: { error in
-            self.showErrorAlert(message: error.localizedDescription)
+        
+        viewModel.output.setLikedState.lazyBind { [weak self] isLiked in
+            guard let self, let isLiked else { return }
+            likeButton.isSelected = isLiked
         }
+        
+        viewModel.input.viewDidLoad.send()
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-        likeButtonSelected?(sender.isSelected)
-        
-        if sender.isSelected {
-            UserDefaultsManager.likedMovies.append(movie)
-        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-        }
+        viewModel.input.didTapLikedButton.send(sender.isSelected)
     }
 }
 
 //MARK: - Configuration
 private extension MovieDetailViewController {
     func configureViews() {
-        navigationItem.title = movie.title
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: likeButton)
         
-        let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-        likeButton.isSelected = isLiked
         likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background
@@ -125,19 +89,17 @@ private extension MovieDetailViewController {
         let castCellRegistration = UICollectionView.CellRegistration(handler: castCellRegistrationHandler)
         
         dataSource = DataSource(collectionView: collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            guard let section = Section(rawValue: indexPath.section) else {
-                fatalError("Unknown section")
-            }
             var cell: UICollectionViewCell
-            switch section {
-            case .backdrop:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.backdrop?.value)
-            case .synopsys:
-                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: itemIdentifier.synopsis?.value)
-            case .cast:
-                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: itemIdentifier.cast?.value)
-            case .poster:
-                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: itemIdentifier.poster?.value)
+            
+            switch itemIdentifier {
+            case .backdrop(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: value.value)
+            case .synopsis(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: synopsisCellRegistration, for: indexPath, item: value.value)
+            case .cast(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: castCellRegistration, for: indexPath, item: value.value)
+            case .poster(let value):
+                cell = collectionView.dequeueConfiguredReusableCell(using: backdropCellRegistration, for: indexPath, item: value.value)
             }
             
             return cell
@@ -157,62 +119,15 @@ private extension MovieDetailViewController {
             }
         }
         
-        createSnapshot()
         collectionView.dataSource = dataSource
     }
 }
 
 //MARK: - CollectionView DataSource
 private extension MovieDetailViewController {
-    enum Section: Int {
-        case backdrop
-        case synopsys
-        case cast
-        case poster
-        
-        var header: String? {
-            switch self {
-            case .backdrop:
-                return nil
-            case .synopsys:
-                return "Synopsis"
-            case .cast:
-                return "Cast"
-            case .poster:
-                return "Poster"
-            }
-        }
-    }
     
-    struct Item: Hashable {
-        let backdrop: Identifier<Image>?
-        let synopsis: Identifier<String>?
-        let cast: Identifier<Credit>?
-        let poster: Identifier<Image>?
-        
-        private init(backdrop: Image?, synopsis: String?, cast: Credit?, poster: Image?) {
-            self.backdrop = backdrop != nil ? Identifier(value: backdrop!) : nil
-            self.synopsis = synopsis != nil ? Identifier(value: synopsis!) : nil
-            self.cast = cast != nil ? Identifier(value: cast!) : nil
-            self.poster = poster != nil ? Identifier(value: poster!) : nil
-        }
-        
-        init(backdrop: Image) {
-            self.init(backdrop: backdrop, synopsis: nil, cast: nil, poster: nil)
-        }
-        
-        init(synopsis: String) {
-            self.init(backdrop: nil, synopsis: synopsis, cast: nil, poster: nil)
-        }
-        
-        init(cast: Credit) {
-            self.init(backdrop: nil, synopsis: nil, cast: cast, poster: nil)
-        }
-        
-        init(poster: Image) {
-            self.init(backdrop: nil, synopsis: nil, cast: nil, poster: poster)
-        }
-    }
+    typealias Section = MovieDetailViewModel.Section
+    typealias Item = MovieDetailViewModel.Item
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
@@ -237,11 +152,7 @@ private extension MovieDetailViewController {
     
     func movieDeatilInfoSupplemetaryRegistrationHandler(supplementaryView: MovieDetailInfoSupplementaryView, string: String, indexPath: IndexPath) {
         if indexPath.section == 0 {
-            // TODO: - Movie 작업 모델로 분리
-            let dateStr = movie.release_date ?? "_"
-            let ratingStr = String(movie.vote_average ?? 0.0)
-            let genres = (movie.genre_ids?.prefix(2).compactMap{ Genre(rawValue: $0)?.name_kr }) ?? []
-            let genreStr = genres.joined(separator: ", ")
+            guard let (dateStr, ratingStr, genreStr) = viewModel.output.configureMovieDetailInfo.value else { return }
             supplementaryView.configure(with: [dateStr, ratingStr, genreStr])
         }
     }
@@ -254,7 +165,7 @@ private extension MovieDetailViewController {
         switch section {
         case .backdrop:
             return
-        case .synopsys:
+        case .synopsis:
             let moreButton = MoreButton()
             moreButton.tag = indexPath.item
             moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
@@ -282,20 +193,18 @@ private extension MovieDetailViewController {
         dataSource.apply(snapshot)
     }
     
-    func createSnapshot() {
-        let backdropItems = backdrops.prefix(5).map{ Item(backdrop: $0) }
-        let synopsysItems = [Item(synopsis: movie.overview ?? "")]
-        let creditItems = credits.map{ Item(cast: $0) }
-        let posterItems: [Item] = posters.map{ Item(poster: $0) }
+    func createSnapshot(_ movieDeatil: MovieDetailViewModel.MovieDetail) {
         
         snapshot = Snapshot()
-        snapshot.appendSections([.backdrop, .synopsys, .cast, .poster])
-        snapshot.appendItems(backdropItems, toSection: .backdrop)
-        snapshot.appendItems(synopsysItems, toSection: .synopsys)
-        snapshot.appendItems(creditItems, toSection: .cast)
-        snapshot.appendItems(posterItems, toSection: .poster)
+        snapshot.appendSections([.backdrop, .synopsis, .cast, .poster])
+        snapshot.appendItems(movieDeatil.backdropItems, toSection: .backdrop)
+        snapshot.appendItems(movieDeatil.synopsysItems, toSection: .synopsis)
+        snapshot.appendItems(movieDeatil.creditItems, toSection: .cast)
+        snapshot.appendItems(movieDeatil.posterItems, toSection: .poster)
         dataSource.apply(snapshot)
     }
+    
+
 }
 
 //MARK: - CollectionView Delegate
@@ -306,9 +215,11 @@ extension MovieDetailViewController: UICollectionViewDelegate {
             let supplementaryView = collectionView.supplementaryView(forElementKind: "layout-footer-element-kind", at: indexPathForBackdrop)
                         
             guard let movieInfoView = supplementaryView as? MovieDetailInfoSupplementaryView else { return }
+            let backdropCount = viewModel.backdrops.count
+            
             if movieInfoView.pageControl.numberOfPages != 5
-               || movieInfoView.pageControl.numberOfPages != backdrops.count {
-                movieInfoView.pageControl.numberOfPages = backdrops.count > 5 ? 5 : backdrops.count
+               || movieInfoView.pageControl.numberOfPages != backdropCount {
+                movieInfoView.pageControl.numberOfPages = backdropCount > 5 ? 5 : backdropCount
             }
             movieInfoView.pageControl.currentPage = indexPath.item
         }
@@ -330,7 +241,7 @@ private extension MovieDetailViewController {
         switch section {
         case .backdrop:
             return sectionForBackdrop()
-        case .synopsys:
+        case .synopsis:
             return sectionForSynopsys()
         case .cast:
             return sectionForCast()
