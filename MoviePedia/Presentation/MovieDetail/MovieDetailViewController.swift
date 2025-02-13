@@ -17,11 +17,7 @@ final class MovieDetailViewController: BaseViewController {
     private var dataSource: DataSource!
     private var snapshot: Snapshot!
     
-    private var likedMovies: [Movie] { UserDefaultsManager.likedMovies }
-    
     let viewModel = MovieDetailViewModel()
-    
-    var likeButtonSelected: ((Bool) -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -53,17 +49,16 @@ final class MovieDetailViewController: BaseViewController {
             self.createSnapshot(movieDetail)
         }
         
+        viewModel.output.setLikedState.lazyBind { [weak self] isLiked in
+            guard let self, let isLiked else { return }
+            likeButton.isSelected = isLiked
+        }
+        
         viewModel.input.viewDidLoad.send()
     }
     
     @objc func likedButtonTapped(_ sender: UIButton) {
-//        likeButtonSelected?(sender.isSelected)
-//        
-//        if sender.isSelected {
-//            UserDefaultsManager.likedMovies.append(movie)
-//        } else if let removeIndex = UserDefaultsManager.likedMovies.firstIndex(where: {$0.id == movie.id }) {
-//            UserDefaultsManager.likedMovies.remove(at: removeIndex)
-//        }
+        viewModel.input.didTapLikedButton.send(sender.isSelected)
     }
 }
 
@@ -72,8 +67,6 @@ private extension MovieDetailViewController {
     func configureViews() {
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: likeButton)
         
-//        let isLiked = likedMovies.contains(where: { $0.id == movie.id })
-//        likeButton.isSelected = isLiked
         likeButton.addTarget(self, action: #selector(likedButtonTapped), for: .touchUpInside)
         
         collectionView.backgroundColor = .moviepedia_background

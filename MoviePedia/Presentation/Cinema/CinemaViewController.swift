@@ -336,13 +336,15 @@ extension CinemaViewController: UICollectionViewDelegate {
             guard let movie = viewModel.movies?[indexPath.row] else { return }
             movieDetailVC.viewModel.input.receivedMovie.send(movie)
             
-            movieDetailVC.likeButtonSelected = { (isLiked) in
-                guard let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
+            movieDetailVC.viewModel.output.updateLikedMovie.lazyBind { [weak self] isLiked in
+                guard let self, let isLiked,
+                      let cell = collectionView.cellForItem(at: indexPath) as? TodayMovieCollectionViewCell else {
                     print("Could not find cell")
                     return
                 }
                 cell.likeButton.isSelected = isLiked
             }
+            
             navigationController?.pushViewController(movieDetailVC, animated: true)
         }
     }

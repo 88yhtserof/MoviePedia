@@ -181,8 +181,9 @@ extension MovieSearchViewController: UICollectionViewDelegate {
         let movie = viewModel.movies[indexPath.row]
         movieDetailVC.viewModel.input.receivedMovie.send(movie)
         
-        movieDetailVC.likeButtonSelected = { (isLiked) in
-            guard let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
+        movieDetailVC.viewModel.output.updateLikedMovie.lazyBind { [weak self] isLiked in
+            guard let self, let isLiked,
+                  let cell = collectionView.cellForItem(at: indexPath) as? MovieListCollectionViewCell else {
                 print("Could not find cell")
                 return
             }

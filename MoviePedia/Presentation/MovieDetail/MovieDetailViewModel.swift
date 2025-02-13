@@ -15,6 +15,7 @@ final class MovieDetailViewModel: BaseViewModel {
     struct Input {
         let receivedMovie: Observable<Movie?> = Observable(nil)
         let viewDidLoad: Observable<Void> = Observable(())
+        let didTapLikedButton: Observable<Bool?> = Observable(nil)
     }
     
     struct Output {
@@ -22,9 +23,15 @@ final class MovieDetailViewModel: BaseViewModel {
         let configureInitialViewData: Observable<(Movie)?> = Observable(nil)
         let createSnapshot: Observable<MovieDetail?> = Observable(nil)
         let configureMovieDetailInfo: Observable<(String, String, String)?> = Observable(nil)
+        let setLikedState: Observable<Bool?> = Observable(nil)
+        let updateLikedMovie: Observable<Bool?> = Observable(nil)
     }
     
     // Data
+    var likedMovies: [Movie] {
+        get { UserDefaultsManager.likedMovies }
+        set { UserDefaultsManager.likedMovies = newValue }
+    }
     private let networkManager = TMDBNetworkManager.shared
     var backdrops: [Image] = []
     private var posters: [Image] = []
@@ -50,6 +57,13 @@ final class MovieDetailViewModel: BaseViewModel {
             guard let self else { return }
             self.shouldLoadMovieDetail()
             self.configureMovieDetailInfo()
+            self.checkLikedMovie()
+        }
+        
+        input.didTapLikedButton.lazyBind { [weak self] isLiked in
+            print("Input didTapLikedButton bind")
+            guard let self, let isLiked else { return }
+            self.updateLikedMovies(isLiked)
         }
     }
 }
@@ -152,5 +166,21 @@ private extension MovieDetailViewModel {
         let genres = (movie.genre_ids?.prefix(2).compactMap{ Genre(rawValue: $0)?.name_kr }) ?? []
         let genreStr = genres.joined(separator: ", ")
         output.configureMovieDetailInfo.send((dateStr, ratingStr, genreStr))
+    }
+    
+    func updateLikedMovies(_ isLiked: Bool) {
+        guard let movie = input.receivedMovie.value else { return }
+        if isLiked {
+            likedMovies.append(movie)
+        } else if let removeIndex = likedMovies.firstIndex(where: {$0.id == movie.id }) {
+            likedMovies.remove(at: removeIndex)
+        }
+        output.updateLikedMovie.send(isLiked)
+    }
+    
+    func checkLikedMovie() {
+        guard let movie = input.receivedMovie.value else { return }
+        let isLiked = likedMovies.contains(where: { $0.id == movie.id })
+        output.setLikedState.send(isLiked)
     }
 }
