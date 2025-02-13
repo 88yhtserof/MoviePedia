@@ -26,7 +26,7 @@ final class MovieDetailViewModel: BaseViewModel {
     
     // Data
     private let networkManager = TMDBNetworkManager.shared
-    private var backdrops: [Image] = []
+    var backdrops: [Image] = []
     private var posters: [Image] = []
     private var credits: [Credit] = []
     
@@ -46,6 +46,7 @@ final class MovieDetailViewModel: BaseViewModel {
     func transform() {
         
         input.viewDidLoad.lazyBind { [weak self] _ in
+            print("Input viewDidLoad bind")
             guard let self else { return }
             self.shouldLoadMovieDetail()
             self.configureMovieDetailInfo()

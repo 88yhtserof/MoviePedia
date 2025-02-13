@@ -48,6 +48,7 @@ final class MovieDetailViewController: BaseViewController {
         }
         
         viewModel.output.createSnapshot.lazyBind { [weak self] movieDetail in
+            print("Ouytput createSnapshot bind")
             guard let self, let movieDetail else { return }
             self.createSnapshot(movieDetail)
         }
@@ -216,17 +217,19 @@ private extension MovieDetailViewController {
 //MARK: - CollectionView Delegate
 extension MovieDetailViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-//        if indexPath.section == 0 {
-//            let indexPathForBackdrop = IndexPath(item: 0, section: 0)
-//            let supplementaryView = collectionView.supplementaryView(forElementKind: "layout-footer-element-kind", at: indexPathForBackdrop)
-//                        
-//            guard let movieInfoView = supplementaryView as? MovieDetailInfoSupplementaryView else { return }
-//            if movieInfoView.pageControl.numberOfPages != 5
-//               || movieInfoView.pageControl.numberOfPages != backdrops.count {
-//                movieInfoView.pageControl.numberOfPages = backdrops.count > 5 ? 5 : backdrops.count
-//            }
-//            movieInfoView.pageControl.currentPage = indexPath.item
-//        }
+        if indexPath.section == 0 {
+            let indexPathForBackdrop = IndexPath(item: 0, section: 0)
+            let supplementaryView = collectionView.supplementaryView(forElementKind: "layout-footer-element-kind", at: indexPathForBackdrop)
+                        
+            guard let movieInfoView = supplementaryView as? MovieDetailInfoSupplementaryView else { return }
+            let backdropCount = viewModel.backdrops.count
+            
+            if movieInfoView.pageControl.numberOfPages != 5
+               || movieInfoView.pageControl.numberOfPages != backdropCount {
+                movieInfoView.pageControl.numberOfPages = backdropCount > 5 ? 5 : backdropCount
+            }
+            movieInfoView.pageControl.currentPage = indexPath.item
+        }
     }
 }
 
