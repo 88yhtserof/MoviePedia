@@ -7,6 +7,33 @@
 
 import Foundation
 
+@propertyWrapper
+struct MoviePediaUserDefaults<T: Codable> {
+    
+    let key: String
+    let defaultValue: T
+    
+    var wrappedValue: T {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: key),
+                  let user = try? JSONDecoder().decode(T.self, from: data) else {
+                print("Failed to load user from UserDefaults")
+                return defaultValue
+            }
+            return user
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                UserDefaults.standard.set(data, forKey: key)
+            } catch {
+                print("ERROR: Failed to save user to UserDefaults", error, terminator: "\n")
+            }
+        }
+    }
+    
+}
+
 enum UserDefaultsManager {
     
     private enum Key: String, CaseIterable {
@@ -14,74 +41,24 @@ enum UserDefaultsManager {
         case isOnboardingNotNeeded
         case likedMovies
         case recentSearches
-        
-        var defaultName: String {
-            return rawValue
-        }
     }
     
     static func reset() {
         Key.allCases
             .forEach {
-                UserDefaults.standard.removeObject(forKey: $0.defaultName)
+                UserDefaults.standard.removeObject(forKey: $0.rawValue)
             }
     }
     
-    // TODO: - 추상화
-    static var user: User? {
-        get {
-            guard let data = UserDefaults.standard.data(forKey: Key.user.defaultName),
-                  let user = try? JSONDecoder().decode(User.self, from: data) else { return nil }
-            return user
-        }
-        set {
-            do {
-                let data = try JSONEncoder().encode(newValue)
-                UserDefaults.standard.set(data, forKey: Key.user.defaultName)
-            } catch {
-                print("ERROR:", error)
-            }
-        }
-    }
+    @MoviePediaUserDefaults<User?>(key: Key.user.rawValue, defaultValue: nil)
+    static var user
     
-    static var isOnboardingNotNeeded: Bool {
-        get {
-            return UserDefaults.standard.bool(forKey: Key.isOnboardingNotNeeded.defaultName)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: Key.isOnboardingNotNeeded.defaultName)
-        }
-    }
+    @MoviePediaUserDefaults<Bool>(key: Key.isOnboardingNotNeeded.rawValue, defaultValue: false)
+    static var isOnboardingNotNeeded
     
-    static var likedMovies: [Movie] {
-        get {
-            guard let data = UserDefaults.standard.data(forKey: Key.likedMovies.defaultName),
-                  let decoded = try? JSONDecoder().decode([Movie].self, from: data) else { return [] }
-            return decoded
-        }
-        set {
-            do {
-                let data = try JSONEncoder().encode(newValue)
-                UserDefaults.standard.set(data, forKey: Key.likedMovies.defaultName)
-            } catch {
-                print("ERROR:", error)
-            }
-        }
-    }
+    @MoviePediaUserDefaults<[Movie]>(key: Key.likedMovies.rawValue, defaultValue: [])
+    static var likedMovies
     
-    static var recentSearches: Set<RecentSearch> {
-        get {
-            guard let data = UserDefaults.standard.data(forKey: Key.recentSearches.defaultName),
-                  let decoded = try? JSONDecoder().decode(Set<RecentSearch>.self, from: data) else { return Set<RecentSearch>() }
-            return decoded
-        }
-        set {
-            do {
-                let data = try JSONEncoder().encode(newValue)
-                UserDefaults.standard.set(data, forKey: Key.recentSearches.defaultName)
-            } catch {
-                print("ERROR:", error)
-            }
-        }
-    }
+    @MoviePediaUserDefaults<Set<RecentSearch>>(key: Key.recentSearches.rawValue, defaultValue: [])
+    static var recentSearches
 }
